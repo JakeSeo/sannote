@@ -25,6 +25,7 @@ v1은 정보+기록 앱. GPS 실시간 트래킹은 v2 이후 (BACKLOG.md 참조
 - **저장 구조: GPS 트랙은 로컬(drift/sqlite)만. 서버 visits에는 메타데이터만**
   (course_id, 날짜, 소요시간 — 트랙 폴리라인·좌표는 서버에 올리지 않음)
 - 인증: v1은 Supabase 익명 로그인. 소셜 로그인은 v2 계정 연동으로
+- 톤앤매너: **숲** (진녹 주색 + 미색 바탕 + 둥근 카드, 코스·강조는 주황). 정의는 lib/core/theme/app_theme.dart 한 곳에서만
 
 ## 데이터 구조 (시드 임포트 완료 상태 기준)
 - mountains(7 산군) / nodes(1,328) / segments(1,732) / spots(3,716) / safety_points(97)

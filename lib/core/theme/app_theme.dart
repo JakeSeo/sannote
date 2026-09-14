@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// 톤앤매너 시안. M3 🔴 결정 대상 — 개발자 메뉴에서 실시간 전환해 비교한다.
+/// 톤앤매너. 2026-09-14 결정: **숲(forest)** 확정.
+/// dawn은 비교용 시안으로만 남겨 두며(개발자 메뉴 전환), 릴리즈에는 forest만 쓴다.
 enum ThemeVariant {
-  /// A. 숲: 진녹색 + 따뜻한 미색. 차분하고 자연스러운 느낌
-  forest('A. 숲', '진녹색 + 미색, 둥근 카드'),
+  /// 확정안. 진녹색 + 따뜻한 미색, 둥근 카드
+  forest('숲 (확정)', '진녹색 + 미색, 둥근 카드'),
 
-  /// B. 새벽: 남색 + 주황 포인트. 또렷하고 젊은 느낌
-  dawn('B. 새벽', '남색 + 주황 포인트, 각진 카드');
+  /// 비교용 시안 (미채택)
+  dawn('새벽 (미채택 시안)', '남색 + 주황 포인트, 각진 카드');
 
   const ThemeVariant(this.label, this.summary);
   final String label;

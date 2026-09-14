@@ -43,7 +43,8 @@
         앱에는 "추정" 배지. 검증 시 tools/entrance_access_template.csv의 note를 바꿔 tools/import_entrance_access.py로 덮어쓰기.
         호선(line)은 OSM 노드에 없어 비어 있음 → 검증 때 채움. 우선순위: 코스 출발점 입구부터
 - 🔴 결정: 화면 톤앤매너 (Claude Code가 시안 2개 만들면 선택)
-      → 시안 A(숲: 진녹+미색, 둥근) / B(새벽: 남색+주황, 각진) 구현됨. 개발자 메뉴(탐색 제목 길게 누르기)에서 전환. 미결정 시 A 유지
+      → ✅ 결정 (2026-09-14): **A. 숲** (진녹 #2E6B3E + 미색 #FAF8F2, 둥근 카드, 코스 강조 주황 #E07A2F). lib/core/theme/app_theme.dart
+        B(새벽)는 디버그 개발자 메뉴 비교용으로만 남김
 
 ## M4. GPS 산행 기록 (예상: 저녁 3-4회)
 - [ ] 인증: Supabase **익명 로그인**으로 시작 (소셜 로그인은 v2 "계정 연동"으로)

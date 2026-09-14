@@ -6,7 +6,7 @@ import 'app_theme.dart';
 /// 디버그 전용: `--dart-define=SANNOTE_THEME=dawn` 으로 시작 시안 지정 (스크린샷용)
 const _debugTheme = String.fromEnvironment('SANNOTE_THEME');
 
-/// 현재 톤앤매너 시안. 결정 후엔 기본값을 확정 시안으로 바꾸고 전환 UI를 제거한다.
+/// 현재 테마. 기본은 확정안 forest. 디버그 빌드에서만 비교용 시안으로 전환 가능.
 class ThemeVariantNotifier extends Notifier<ThemeVariant> {
   @override
   ThemeVariant build() {

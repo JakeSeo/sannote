@@ -36,7 +36,7 @@ class _DeveloperMenuSheet extends ConsumerWidget {
         children: [
           Text('개발자 메뉴 (디버그 전용)', style: text.titleMedium),
           const SizedBox(height: 12),
-          Text('톤앤매너 시안', style: text.labelLarge),
+          Text('테마 (확정: 숲 · 비교용 전환)', style: text.labelLarge),
           RadioGroup<ThemeVariant>(
             groupValue: variant,
             onChanged: (nv) => nv == null ? null : ref.read(themeVariantProvider.notifier).set(nv),
