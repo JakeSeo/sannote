@@ -29,6 +29,16 @@ abstract final class MapOverlays {
 
   static const entranceColor = Color(0xFF2E7D32);
 
+  // 완주해서 칠해진 길 (코어 루프). 회색 위에 강조색.
+  static const doneColor = Color(0xFFE07A2F);
+  static const doneWidth = 4.0;
+  static const doneId = 'done:segments';
+
+  /// 완주 구간 색칠 오버레이 (없으면 null)
+  static NAddableOverlay? doneOverlay(List<TrailSegment> completed) => completed.isEmpty
+      ? null
+      : _multipart(id: doneId, segments: completed, color: doneColor, width: doneWidth, zIndex: 12);
+
   static NLatLng toNLatLng(GeoPoint p) => NLatLng(p.lat, p.lon);
 
   /// 산군 × 등산로/공원 조합마다 1개의 멀티파트 오버레이 → 총 14개로 1,732구간 렌더.

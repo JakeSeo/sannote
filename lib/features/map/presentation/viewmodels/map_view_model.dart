@@ -8,6 +8,7 @@ import '../../../courses/domain/usecases/compute_course_stats.dart';
 import '../../../courses/domain/usecases/get_courses.dart';
 import '../../../mountains/domain/entities/mountain.dart';
 import '../../../mountains/domain/usecases/get_mountains.dart';
+import '../../../records/presentation/viewmodels/records_providers.dart';
 import '../../../spots/domain/usecases/get_entrances.dart';
 import '../../../trails/domain/entities/trail_segment.dart';
 import '../../../trails/domain/usecases/get_trail_network.dart';
@@ -29,6 +30,11 @@ class MapViewModel extends Notifier<MapState> {
   @override
   MapState build() {
     _loadAll(); // 첫 await 이후에만 state를 건드리므로 build 중 state 변경 없음
+    // 완주 통계는 listen으로 받아 상태에 합친다 (watch하면 build가 다시 돌아 선택 상태가 날아감)
+    ref.listen(conquestStatsProvider, (_, next) {
+      final v = next.value;
+      if (v != null) state = state.copyWith(conquest: v);
+    }, fireImmediately: true);
     return const MapState();
   }
 

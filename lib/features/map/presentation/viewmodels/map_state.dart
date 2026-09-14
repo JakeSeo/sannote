@@ -4,6 +4,7 @@ import '../../../../core/geo/geo_point.dart';
 import '../../../courses/domain/entities/course.dart';
 import '../../../courses/domain/entities/course_stats.dart';
 import '../../../mountains/domain/entities/mountain.dart';
+import '../../../records/domain/entities/conquest_stats.dart';
 import '../../../spots/domain/entities/spot.dart';
 import '../../../trails/domain/entities/trail_segment.dart';
 
@@ -17,6 +18,7 @@ class MapState {
     this.selectedMountainGroup,
     this.selectedCourse,
     this.cameraCommand,
+    this.conquest = ConquestStats.empty,
   });
 
   final AsyncValue<List<Mountain>> mountains;
@@ -32,6 +34,14 @@ class MapState {
 
   /// View가 1회 소비하는 카메라 이동 명령 (seq가 바뀔 때만 실행)
   final CameraCommand? cameraCommand;
+
+  /// 완주 코스 합집합 (색칠 대상 구간 + 헤더 숫자)
+  final ConquestStats conquest;
+
+  /// 완주해서 색칠된 구간들
+  List<TrailSegment> get completedSegments => conquest.isEmpty
+      ? const []
+      : (segments.value ?? const []).where((s) => conquest.completedSegmentIds.contains(s.segmentId)).toList();
 
   bool get isLoading => mountains.isLoading || segments.isLoading || entrances.isLoading || courses.isLoading;
 
@@ -58,6 +68,7 @@ class MapState {
     Object? selectedMountainGroup = _keep,
     Object? selectedCourse = _keep,
     CameraCommand? cameraCommand,
+    ConquestStats? conquest,
   }) =>
       MapState(
         mountains: mountains ?? this.mountains,
@@ -69,6 +80,7 @@ class MapState {
             : selectedMountainGroup as String?,
         selectedCourse: selectedCourse == _keep ? this.selectedCourse : selectedCourse as CourseView?,
         cameraCommand: cameraCommand ?? this.cameraCommand,
+        conquest: conquest ?? this.conquest,
       );
 
   static const _keep = Object();

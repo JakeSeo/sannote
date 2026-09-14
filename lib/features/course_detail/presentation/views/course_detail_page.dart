@@ -8,6 +8,13 @@ import '../../../../core/theme/theme_provider.dart';
 import '../../../courses/domain/entities/course_summary.dart';
 import '../../../explore/presentation/views/widgets/course_tile.dart';
 import '../../../map/presentation/views/map_overlays.dart';
+import '../../../records/domain/entities/hike.dart';
+import '../../../records/presentation/viewmodels/records_providers.dart';
+import '../../../records/presentation/viewmodels/recording_view_model.dart';
+import '../../../records/presentation/views/recording_page.dart';
+import '../../../../core/location/geolocator_location_service.dart';
+import '../../../../core/location/mock_location_service.dart';
+import '../../../../core/location/location_provider.dart';
 import '../../../safety/domain/entities/safety_point.dart';
 import '../../../spots/domain/entities/spot.dart';
 import '../viewmodels/course_detail_view_model.dart';
@@ -45,8 +52,50 @@ class CourseDetailPage extends ConsumerWidget {
     }
 
     final stats = s.stats;
+    final myHikes = (ref.watch(hikesProvider).value ?? const <Hike>[])
+        .where((h) => h.courseId == s.course.courseId && h.status != HikeStatus.recording)
+        .toList();
+    final myCompleted = myHikes.where((h) => h.isCompleted).length;
+    final totalCompleted = ref.watch(completionCountsProvider).value?[s.course.courseId];
+    final recording = ref.watch(recordingViewModelProvider);
+    final isThisRecording = recording.hike?.courseId == s.course.courseId;
     return Scaffold(
       appBar: AppBar(title: Text(s.course.name)),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      totalCompleted == null
+                          ? '완주자 수 불러오는 중'
+                          : (totalCompleted == 0 ? '아직 완주자가 없어요. 첫 번째가 되어보세요' : '총 $totalCompleted명 완주'),
+                      style: text.bodySmall,
+                    ),
+                    Text(
+                      myHikes.isEmpty ? '내 기록 없음' : '내 기록 ${myHikes.length}회 · 완주 $myCompleted회',
+                      style: text.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: recording.isRecording && !isThisRecording
+                    ? null
+                    : () => _startOrOpen(context, ref, s, isThisRecording),
+                icon: Icon(isThisRecording ? Icons.fiber_manual_record : Icons.play_arrow),
+                label: Text(isThisRecording ? '기록 중 보기' : (recording.isRecording ? '다른 산행 기록 중' : '산행 시작')),
+              ),
+            ],
+          ),
+        ),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isTablet = constraints.maxWidth >= 600;
@@ -137,6 +186,24 @@ class CourseDetailPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// [산행 시작]: 위치 권한 확인(실 GPS일 때) → 기록 시작 → 기록 화면.
+Future<void> _startOrOpen(BuildContext context, WidgetRef ref, CourseSummary s, bool alreadyRecording) async {
+  if (!alreadyRecording) {
+    final location = ref.read(locationServiceProvider);
+    if (location is! MockLocationService && !await GeolocatorLocationService.ensurePermission()) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('위치 권한이 필요해요. 설정에서 산노트의 위치 접근을 허용해주세요.'),
+      ));
+      return;
+    }
+    await ref.read(recordingViewModelProvider.notifier).start(s);
+  }
+  if (!context.mounted) return;
+  await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage()));
+  ref.invalidate(completionCountsProvider);
 }
 
 class _CourseMap extends ConsumerWidget {

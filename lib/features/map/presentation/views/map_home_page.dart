@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/dev/developer_menu.dart';
 import '../viewmodels/map_state.dart';
 import '../viewmodels/map_view_model.dart';
 import 'map_overlay_sync.dart';
@@ -61,7 +62,16 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
                 onMapReady: _onMapReady,
                 onCameraIdle: _onCameraIdle,
               ),
-              Positioned(top: safe.top + 8, left: 12, right: 12, child: MapTopBar(isLoading: state.isLoading)),
+              Positioned(
+                top: safe.top + 8,
+                left: 12,
+                right: 12,
+                child: MapTopBar(
+                  isLoading: state.isLoading,
+                  conquest: state.conquest,
+                  onLongPress: () => DeveloperMenu.show(context),
+                ),
+              ),
               if (mountain != null)
                 Positioned(
                   left: 12,

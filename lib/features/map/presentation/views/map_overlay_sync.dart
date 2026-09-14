@@ -21,6 +21,8 @@ class MapOverlaySync {
   final Set<String> _entranceIds = {};
   String? _courseId;
   bool _courseDrawn = false;
+  int _doneCount = -1;
+  bool _doneDrawn = false;
 
   Future<void> _queue = Future.value();
 
@@ -33,8 +35,26 @@ class MapOverlaySync {
   Future<void> _applyNow(MapState s) async {
     await _syncMarkers(s);
     await _syncNetwork(s);
+    await _syncDone(s);
     await _syncFocus(s);
     await _syncCourse(s);
+  }
+
+  /// 완주 구간 색칠. 구간 집합이 바뀌었을 때만 다시 그린다.
+  Future<void> _syncDone(MapState s) async {
+    if (s.segments.value == null) return;
+    final completed = s.completedSegments;
+    if (completed.length == _doneCount) return;
+    _doneCount = completed.length;
+    if (_doneDrawn) {
+      await _delete(NOverlayType.multipartPathOverlay, MapOverlays.doneId);
+      _doneDrawn = false;
+    }
+    final overlay = MapOverlays.doneOverlay(completed);
+    if (overlay == null) return;
+    _doneDrawn = true;
+    await _guard('완주 색칠', () => _controller.addOverlay(overlay));
+    debugPrint('[map] 완주 구간 ${completed.length}개 색칠');
   }
 
   Future<void> _syncMarkers(MapState s) async {

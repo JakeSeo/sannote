@@ -1,0 +1,53 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/geo/geo_point.dart';
+import '../../data/repositories/hike_repository_impl.dart';
+import '../entities/hike.dart';
+import '../entities/track_point.dart';
+import '../repositories/hike_repository.dart';
+
+/// 종료: 거리 계산 + 사용자가 고른 상태(완주/일부/삭제)로 마감.
+class FinishHike {
+  const FinishHike(this._repo);
+
+  final HikeRepository _repo;
+
+  Future<void> call(String hikeId, {required HikeStatus status, required double? coverage}) async {
+    if (status == HikeStatus.discarded) {
+      await _repo.delete(hikeId);
+      return;
+    }
+    final points = await _repo.getPoints(hikeId);
+    await _repo.finish(
+      hikeId,
+      endedAt: DateTime.now(),
+      status: status,
+      distanceKm: trackDistanceKm(points),
+      coverage: coverage,
+    );
+  }
+
+  /// 정확도 50m 초과 점 제외, [minStepM] 미만 이동은 GPS 떨림으로 보고 합산하지 않는다.
+  static const minStepM = 5.0;
+
+  static double trackDistanceKm(List<TrackPoint> points) =>
+      trackDistanceKmOf(points.where((p) => (p.accuracyM ?? 0) <= 50).map((p) => p.position));
+
+  static double trackDistanceKmOf(Iterable<GeoPoint> positions) {
+    GeoPoint? prev;
+    var km = 0.0;
+    for (final p in positions) {
+      if (prev == null) {
+        prev = p;
+        continue;
+      }
+      final d = distanceKm(prev, p);
+      if (d * 1000 < minStepM) continue; // 제자리 떨림: 기준점 유지
+      km += d;
+      prev = p;
+    }
+    return km;
+  }
+}
+
+final finishHikeProvider = Provider<FinishHike>((ref) => FinishHike(ref.watch(hikeRepositoryProvider)));

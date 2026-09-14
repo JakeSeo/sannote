@@ -102,10 +102,28 @@ class _MountainList extends ConsumerWidget {
               ),
           ],
         ),
-        if (state.sort == MountainSort.distance && state.reference != null)
+        if (state.sort == MountainSort.distance)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text('현재 위치 기준 직선거리', style: text.bodySmall),
+            child: state.reference != null
+                ? Text('현재 위치 기준 직선거리', style: text.bodySmall)
+                : Row(
+                    children: [
+                      Expanded(child: Text('위치를 허용하면 가까운 산부터 보여드려요', style: text.bodySmall)),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final ok = await vm.requestLocation();
+                          if (!ok && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('위치 권한이 없어 이름순으로 보여드려요.')),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.my_location, size: 16),
+                        label: const Text('내 위치 사용'),
+                      ),
+                    ],
+                  ),
           ),
         const SizedBox(height: 8),
         for (final m in list) ...[
