@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'features/map/presentation/map_home_page.dart';
+import 'features/map/presentation/views/map_home_page.dart';
 
 class SannoteApp extends StatelessWidget {
   const SannoteApp({super.key});

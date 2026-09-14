@@ -11,7 +11,15 @@ v1은 정보+기록 앱. GPS 실시간 트래킹은 v2 이후 (BACKLOG.md 참조
 - 폰 우선 + 태블릿 반응형 대응
 - 백엔드: Supabase (인증/Postgres/Storage)
 - 지도: flutter_naver_map (네이버 지도 SDK)
-- 상태관리: Riverpod  ← [개발자 취향에 맞게 수정]
+- 상태관리: Riverpod (DI + ViewModel은 Notifier)
+- **아키텍처: 클린 아키텍처 + MVVM.** 의존 방향은 한 방향으로만:
+  `Supabase → Service → Repository → UseCase → ViewModel → UI`
+  - `features/<기능>/data/services/` — Supabase 호출, 원시 행(Map)만 다룸
+  - `features/<기능>/data/repositories/` — Service 결과를 도메인 엔티티로 매핑 (RepositoryImpl)
+  - `features/<기능>/domain/entities|repositories|usecases/` — 엔티티, 리포지토리 인터페이스, 유즈케이스. 지도 SDK·Supabase 타입 import 금지
+  - `features/<기능>/presentation/viewmodels/` — Notifier<State>. UseCase만 호출, Flutter 위젯 import 금지
+  - `features/<기능>/presentation/views/` — 위젯. ViewModel 상태만 보고 그림. 비즈니스 로직 금지
+  - 각 레이어의 Provider는 해당 클래스 파일에 함께 둠 (xxxServiceProvider → xxxRepositoryProvider → xxxUseCaseProvider → xxxViewModelProvider)
 - 사진 스토리지: 초기엔 Supabase Storage, 트래픽 증가 시 Cloudflare R2 이전
 - 코스는 자동 생성하지 않음. 운영자가 큐레이션 (courses.segment_ids 수동 입력)
 - **저장 구조: GPS 트랙은 로컬(drift/sqlite)만. 서버 visits에는 메타데이터만**
