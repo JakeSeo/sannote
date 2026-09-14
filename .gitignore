@@ -1,4 +1,51 @@
+# 비밀 키 (flutter_dotenv) — .env.example만 커밋
 .env
+
+# FVM
 .fvm/
-build/
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (settings.json은 FVM SDK 경로 공유용으로 허용)
+.vscode/*
+!.vscode/settings.json
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
 .dart_tool/
+.packages
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication / Obfuscation related
+app.*.symbols
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Flutter 플러그인 레지스트리 (자동 생성)
+.flutter-plugins-dependencies
