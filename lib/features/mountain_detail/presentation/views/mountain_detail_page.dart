@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../course_detail/presentation/views/course_detail_page.dart';
 import '../../../explore/presentation/views/widgets/course_tile.dart';
 import '../../../spots/domain/entities/entrance_access.dart';
-import '../../../spots/domain/entities/spot.dart';
 import '../viewmodels/mountain_detail_view_model.dart';
 
 /// 산 상세: 소개 · 코스 리스트 · 입구 리스트(지하철 접근 정보).
@@ -79,41 +78,41 @@ class MountainDetailPage extends ConsumerWidget {
                               const SizedBox(height: 8),
                             ],
                             const SizedBox(height: 16),
-                            // 입구
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text('입구 ${state.entrances.length}곳', style: text.titleMedium),
-                                const SizedBox(width: 8),
-                                Text('지하철 접근 정보 ${state.entrancesWithAccess}곳', style: text.bodySmall),
-                              ],
-                            ),
+                            // 지하철로 가기
+                            Text('지하철로 가기', style: text.titleMedium),
                             const SizedBox(height: 4),
-                            Text('접근 정보는 답사한 입구부터 순서대로 채워져요.', style: text.bodySmall),
+                            Text(
+                              '입구 ${state.entrances.length}곳 중 ${state.entrancesWithAccess}곳이 지하철역 1.5km 안에 있어요. '
+                              '"추정"은 지도 직선거리로 계산한 값이라 실제와 다를 수 있어요.',
+                              style: text.bodySmall,
+                            ),
                             const SizedBox(height: 8),
-                            if (state.highlightedEntrances.isNotEmpty)
+                            if (state.courseStarts.isNotEmpty) ...[
                               Card(
                                 child: Column(
                                   children: [
-                                    for (final (i, e) in state.highlightedEntrances.indexed) ...[
+                                    for (final (i, cs) in state.courseStarts.indexed) ...[
                                       if (i > 0) const Divider(height: 1),
-                                      _EntranceRow(
-                                        spot: e,
-                                        access: state.access[e.spotId],
-                                        courseName: state.courseStartNames[e.spotId],
-                                      ),
+                                      _CourseStartRow(courseName: cs.$1, access: cs.$2),
                                     ],
                                   ],
                                 ),
                               ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                '그 외 입구 ${state.entrances.length - state.highlightedEntrances.length}곳은 '
-                                '지도 탭에서 산을 확대하면 초록 마커로 볼 수 있어요.',
-                                style: text.bodySmall,
+                              const SizedBox(height: 8),
+                            ],
+                            if (state.stations.isEmpty)
+                              Text('지하철 접근 정보가 아직 없어요.', style: text.bodySmall)
+                            else
+                              Card(
+                                child: Column(
+                                  children: [
+                                    for (final (i, st) in state.stations.indexed) ...[
+                                      if (i > 0) const Divider(height: 1),
+                                      _StationRow(station: st),
+                                    ],
+                                  ],
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -124,33 +123,65 @@ class MountainDetailPage extends ConsumerWidget {
   }
 }
 
-class _EntranceRow extends StatelessWidget {
-  const _EntranceRow({required this.spot, required this.access, this.courseName});
+class _CourseStartRow extends StatelessWidget {
+  const _CourseStartRow({required this.courseName, required this.access});
 
-  final Spot spot;
+  final String courseName;
   final EntranceAccess? access;
-
-  /// 이 입구에서 출발하는 코스 이름 (있으면)
-  final String? courseName;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final a = access;
-    final title = a == null
-        ? (courseName == null ? '입구' : '$courseName 출발점')
-        : '${a.stationName}${a.line == null ? '' : ' (${a.line})'}';
-    final subtitle = [
-      if (a != null) '역에서 도보 약 ${a.walkMin}분' else '지하철 접근 정보 준비 중',
-      if (a?.note case final n? when n.isNotEmpty) n,
-      if (a != null && courseName != null) '$courseName 출발점',
-    ].join(' · ');
     return ListTile(
       dense: true,
-      leading: Icon(a == null ? Icons.hiking : Icons.subway, color: a == null ? scheme.outline : scheme.primary),
-      title: Text(title),
-      subtitle: Text(subtitle, style: text.bodySmall),
+      leading: Icon(Icons.flag, color: scheme.primary),
+      title: Text('$courseName 출발점'),
+      subtitle: Text(
+        a == null
+            ? '지하철 접근 정보 준비 중'
+            : '${a.stationName}${a.exitNo == null ? '' : ' ${a.exitNo}번 출구'}에서 도보 약 ${a.walkMin}분'
+                '${a.note == null ? '' : ' · ${a.note}'}',
+        style: text.bodySmall,
+      ),
+      trailing: a?.isEstimate == true ? const _EstimateBadge() : null,
+    );
+  }
+}
+
+class _StationRow extends StatelessWidget {
+  const _StationRow({required this.station});
+
+  final StationAccess station;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final s = station;
+    final walk = s.minWalk == s.maxWalk ? '약 ${s.minWalk}분' : '약 ${s.minWalk}~${s.maxWalk}분';
+    final exits = s.exits.isEmpty ? '' : ' ${s.exits.join('·')}번 출구';
+    return ListTile(
+      dense: true,
+      leading: Icon(Icons.subway, color: scheme.primary),
+      title: Text('${s.stationName}${s.line == null ? '' : ' (${s.line})'}'),
+      subtitle: Text('$exits → 입구 ${s.entranceCount}곳 · 도보 $walk'.trimLeft(), style: text.bodySmall),
+      trailing: s.allEstimate ? const _EstimateBadge() : null,
+    );
+  }
+}
+
+class _EstimateBadge extends StatelessWidget {
+  const _EstimateBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(border: Border.all(color: scheme.outline), borderRadius: BorderRadius.circular(6)),
+      child: Text('추정', style: Theme.of(context).textTheme.labelSmall),
     );
   }
 }

@@ -47,13 +47,24 @@ class SpotRepositoryImpl implements SpotRepository {
         ),
       );
 
-  static EntranceAccess _toAccess(Map<String, dynamic> json) => EntranceAccess(
-        spotId: json['spot_id'] as String,
-        stationName: json['station_name'] as String,
-        line: json['line'] as String?,
-        walkMin: (json['walk_min'] as num).toInt(),
-        note: json['note'] as String?,
-      );
+  /// tools/estimate_entrance_access.py 가 쓰는 비고 형식: "자동 추정(직선 651m 기준) 1번 출구 · 검증 전"
+  static const _estimatePrefix = '자동 추정';
+  static final _exitRe = RegExp(r'(\d+)번 출구');
+
+  static EntranceAccess _toAccess(Map<String, dynamic> json) {
+    final rawNote = (json['note'] as String?)?.trim();
+    final isEstimate = rawNote?.startsWith(_estimatePrefix) ?? false;
+    final exit = rawNote == null ? null : _exitRe.firstMatch(rawNote)?.group(1);
+    return EntranceAccess(
+      spotId: json['spot_id'] as String,
+      stationName: json['station_name'] as String,
+      line: (json['line'] as String?)?.trim().isEmpty ?? true ? null : json['line'] as String,
+      walkMin: (json['walk_min'] as num).toInt(),
+      exitNo: exit,
+      isEstimate: isEstimate,
+      note: isEstimate || rawNote == null || rawNote.isEmpty ? null : rawNote,
+    );
+  }
 }
 
 final spotRepositoryProvider = Provider<SpotRepository>(

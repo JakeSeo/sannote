@@ -31,6 +31,37 @@ class MountainDetailState {
 
   int get entrancesWithAccess => entrances.where((e) => access.containsKey(e.spotId)).length;
 
+  /// 역 단위로 묶은 접근 정보. 가까운 역(최소 도보) 순.
+  List<StationAccess> get stations {
+    final byStation = <String, List<EntranceAccess>>{};
+    for (final e in entrances) {
+      final a = access[e.spotId];
+      if (a != null) byStation.putIfAbsent(a.stationName, () => []).add(a);
+    }
+    final list = byStation.entries.map((en) {
+      final walks = en.value.map((a) => a.walkMin).toList()..sort();
+      final exits = en.value.map((a) => a.exitNo).whereType<String>().toSet().toList()
+        ..sort((x, y) => (int.tryParse(x) ?? 0).compareTo(int.tryParse(y) ?? 0));
+      return StationAccess(
+        stationName: en.key,
+        line: en.value.map((a) => a.line).whereType<String>().firstOrNull,
+        exits: exits,
+        entranceCount: en.value.length,
+        minWalk: walks.first,
+        maxWalk: walks.last,
+        allEstimate: en.value.every((a) => a.isEstimate),
+      );
+    }).toList()
+      ..sort((x, y) => x.minWalk.compareTo(y.minWalk));
+    return list;
+  }
+
+  /// 코스 출발 입구의 접근 정보 (코스 이름 → 접근 정보)
+  List<(String courseName, EntranceAccess? access)> get courseStarts => [
+        for (final c in courses)
+          if (c.course.entranceSpotId != null) (c.course.name, access[c.course.entranceSpotId!]),
+      ];
+
   /// 코스 출발점으로 쓰이는 입구 spot_id → 코스 이름
   Map<String, String> get courseStartNames => {
         for (final c in courses)
@@ -42,6 +73,27 @@ class MountainDetailState {
     final starts = courseStartNames;
     return entrances.where((e) => access.containsKey(e.spotId) || starts.containsKey(e.spotId)).toList();
   }
+}
+
+/// 한 지하철역에서 갈 수 있는 입구들의 요약.
+class StationAccess {
+  const StationAccess({
+    required this.stationName,
+    required this.line,
+    required this.exits,
+    required this.entranceCount,
+    required this.minWalk,
+    required this.maxWalk,
+    required this.allEstimate,
+  });
+
+  final String stationName;
+  final String? line;
+  final List<String> exits;
+  final int entranceCount;
+  final int minWalk;
+  final int maxWalk;
+  final bool allEstimate;
 }
 
 /// 산 상세 ViewModel (산군별 family).
