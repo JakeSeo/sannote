@@ -54,6 +54,12 @@ v1은 정보+기록 앱. GPS 실시간 트래킹은 v2 이후 (BACKLOG.md 참조
 - safety_points(구조 표지판)는 "참고용" 라벨과 함께 표시 (2016년 데이터, 실물 검증 전)
 - 앱 어디에도 "이 길은 안전하다"는 단정 표현 금지. 소요시간은 "예상" 표기
 
+## 운영자 도구·마이그레이션
+- DDL은 `supabase/migrations/*.sql`에 번호 순으로 두고, 사용자가 SQL Editor에서 직접 실행 (publishable key로 DDL 불가)
+- 데이터 입력은 `tools/*.py` 스크립트(표준 라이브러리만, `.env` 읽음). 어드민 화면 만들지 않음
+- 디버그 전용 진입: `--dart-define=SANNOTE_START=explore|mountain:<산군>|course:<id>`, `SANNOTE_THEME=forest|dawn`
+- 개발자 메뉴: 탐색 탭 제목 길게 누르기 (kDebugMode 에서만)
+
 ## 세션 시작 시
 1. BACKLOG.md에서 현재 마일스톤 확인
 2. 마일스톤의 완료 조건(AC)을 기준으로 작업
