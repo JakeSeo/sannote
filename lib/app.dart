@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'features/mountains/presentation/mountains_check_page.dart';
+import 'features/map/presentation/map_home_page.dart';
 
 class SannoteApp extends StatelessWidget {
   const SannoteApp({super.key});
@@ -13,7 +13,7 @@ class SannoteApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF2E7D32),
         useMaterial3: true,
       ),
-      home: const MountainsCheckPage(),
+      home: const MapHomePage(),
     );
   }
 }
