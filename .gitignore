@@ -1,0 +1,4 @@
+.env
+.fvm/
+build/
+.dart_tool/
