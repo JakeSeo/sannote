@@ -6,10 +6,10 @@
 ---
 
 ## M0. 프로젝트 셋업 (예상: 저녁 1회)
-- [ ] Flutter 프로젝트 생성, 폴더 구조, Riverpod/네이버지도/Supabase 패키지 셋업
-- [ ] Supabase 연결 (env 분리), 시드 데이터 임포트 확인 쿼리
-- 완료 조건: 앱 실행 시 Supabase에서 mountains 7건을 읽어 콘솔 출력
-- 🔴 결정: 앱 이름(가칭), 번들 ID
+- [x] Flutter 프로젝트 생성, 폴더 구조, Riverpod/네이버지도/Supabase 패키지 셋업
+- [x] Supabase 연결 (env 분리), 시드 데이터 임포트 확인 쿼리
+- 완료 조건: 앱 실행 시 Supabase에서 mountains 7건을 읽어 콘솔 출력 ✅ (2026-09-14, iOS 시뮬레이터)
+- 🔴 결정: 앱 이름(가칭), 번들 ID → ✅ 산노트 / com.woosan.sannote
 - 🔴 당신이 직접: Supabase 프로젝트 생성 + schema.sql 실행 + CSV 임포트,
   네이버클라우드 지도 API 키 발급
 
