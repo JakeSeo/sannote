@@ -1,19 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/cache/memo.dart';
+
 import '../../domain/entities/mountain.dart';
 import '../../domain/repositories/mountain_repository.dart';
 import '../services/mountain_service.dart';
 
 class MountainRepositoryImpl implements MountainRepository {
-  const MountainRepositoryImpl(this._service);
+  MountainRepositoryImpl(this._service);
 
   final MountainService _service;
+  final _memo = AsyncMemo<List<Mountain>>();
 
   @override
-  Future<List<Mountain>> getAll() async {
-    final rows = await _service.fetchAll();
-    return rows.map(_toEntity).toList();
-  }
+  Future<List<Mountain>> getAll() => _memo(() async {
+        final rows = await _service.fetchAll();
+        return rows.map(_toEntity).toList(growable: false);
+      });
 
   static Mountain _toEntity(Map<String, dynamic> json) {
     final lon = json['center_lon'];
@@ -28,6 +31,7 @@ class MountainRepositoryImpl implements MountainRepository {
       center: lon == null || lat == null
           ? null
           : (lat: _toDouble(lat)!, lon: _toDouble(lon)!),
+      description: json['description'] as String?,
     );
   }
 

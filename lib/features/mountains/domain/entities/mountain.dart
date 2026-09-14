@@ -10,6 +10,7 @@ class Mountain {
     required this.totalLengthKm,
     required this.entranceCount,
     this.center,
+    this.description,
   });
 
   final String mountainGroup;
@@ -19,6 +20,9 @@ class Mountain {
   final double totalLengthKm;
   final int entranceCount;
   final GeoPoint? center;
+
+  /// 산 소개 (mountains.description, 운영자가 채움. 없으면 null)
+  final String? description;
 
   @override
   String toString() =>

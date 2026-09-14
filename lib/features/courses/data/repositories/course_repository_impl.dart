@@ -1,19 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/cache/memo.dart';
+
 import '../../domain/entities/course.dart';
 import '../../domain/repositories/course_repository.dart';
 import '../services/course_service.dart';
 
 class CourseRepositoryImpl implements CourseRepository {
-  const CourseRepositoryImpl(this._service);
+  CourseRepositoryImpl(this._service);
 
   final CourseService _service;
+  final _memo = AsyncMemo<List<Course>>();
 
   @override
-  Future<List<Course>> getAll() async {
-    final rows = await _service.fetchAll();
-    return rows.map(_toEntity).toList(growable: false);
-  }
+  Future<List<Course>> getAll() => _memo(() async {
+        final rows = await _service.fetchAll();
+        return rows.map(_toEntity).toList(growable: false);
+      });
 
   static Course _toEntity(Map<String, dynamic> json) => Course(
         courseId: json['course_id'] as String,

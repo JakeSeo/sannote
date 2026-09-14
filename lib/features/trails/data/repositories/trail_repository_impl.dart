@@ -1,20 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/cache/memo.dart';
+
 import '../../../../core/geo/geo_point.dart';
 import '../../domain/entities/trail_segment.dart';
 import '../../domain/repositories/trail_repository.dart';
 import '../services/trail_service.dart';
 
 class TrailRepositoryImpl implements TrailRepository {
-  const TrailRepositoryImpl(this._service);
+  TrailRepositoryImpl(this._service);
 
   final TrailService _service;
+  final _memo = AsyncMemo<List<TrailSegment>>();
 
   @override
-  Future<List<TrailSegment>> getAllSegments() async {
-    final rows = await _service.fetchAllSegments();
-    return rows.map(_toEntity).toList(growable: false);
-  }
+  Future<List<TrailSegment>> getAllSegments() => _memo(() async {
+        final rows = await _service.fetchAllSegments();
+        return rows.map(_toEntity).toList(growable: false);
+      });
 
   static TrailSegment _toEntity(Map<String, dynamic> json) => TrailSegment(
         segmentId: json['segment_id'] as String,
