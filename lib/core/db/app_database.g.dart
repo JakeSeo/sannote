@@ -1,0 +1,1904 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'app_database.dart';
+
+// ignore_for_file: type=lint
+class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HikesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _courseIdMeta = const VerificationMeta(
+    'courseId',
+  );
+  @override
+  late final GeneratedColumn<String> courseId = GeneratedColumn<String>(
+    'course_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _courseNameMeta = const VerificationMeta(
+    'courseName',
+  );
+  @override
+  late final GeneratedColumn<String> courseName = GeneratedColumn<String>(
+    'course_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mountainGroupMeta = const VerificationMeta(
+    'mountainGroup',
+  );
+  @override
+  late final GeneratedColumn<String> mountainGroup = GeneratedColumn<String>(
+    'mountain_group',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('recording'),
+  );
+  static const VerificationMeta _distanceKmMeta = const VerificationMeta(
+    'distanceKm',
+  );
+  @override
+  late final GeneratedColumn<double> distanceKm = GeneratedColumn<double>(
+    'distance_km',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _coverageMeta = const VerificationMeta(
+    'coverage',
+  );
+  @override
+  late final GeneratedColumn<double> coverage = GeneratedColumn<double>(
+    'coverage',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _visitIdMeta = const VerificationMeta(
+    'visitId',
+  );
+  @override
+  late final GeneratedColumn<String> visitId = GeneratedColumn<String>(
+    'visit_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    courseId,
+    courseName,
+    mountainGroup,
+    startedAt,
+    endedAt,
+    status,
+    distanceKm,
+    coverage,
+    syncedAt,
+    visitId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'hikes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Hike> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('course_id')) {
+      context.handle(
+        _courseIdMeta,
+        courseId.isAcceptableOrUnknown(data['course_id']!, _courseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_courseIdMeta);
+    }
+    if (data.containsKey('course_name')) {
+      context.handle(
+        _courseNameMeta,
+        courseName.isAcceptableOrUnknown(data['course_name']!, _courseNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_courseNameMeta);
+    }
+    if (data.containsKey('mountain_group')) {
+      context.handle(
+        _mountainGroupMeta,
+        mountainGroup.isAcceptableOrUnknown(
+          data['mountain_group']!,
+          _mountainGroupMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mountainGroupMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('distance_km')) {
+      context.handle(
+        _distanceKmMeta,
+        distanceKm.isAcceptableOrUnknown(data['distance_km']!, _distanceKmMeta),
+      );
+    }
+    if (data.containsKey('coverage')) {
+      context.handle(
+        _coverageMeta,
+        coverage.isAcceptableOrUnknown(data['coverage']!, _coverageMeta),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    }
+    if (data.containsKey('visit_id')) {
+      context.handle(
+        _visitIdMeta,
+        visitId.isAcceptableOrUnknown(data['visit_id']!, _visitIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Hike map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Hike(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      courseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}course_id'],
+      )!,
+      courseName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}course_name'],
+      )!,
+      mountainGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mountain_group'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      distanceKm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}distance_km'],
+      )!,
+      coverage: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}coverage'],
+      ),
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      ),
+      visitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}visit_id'],
+      ),
+    );
+  }
+
+  @override
+  $HikesTable createAlias(String alias) {
+    return $HikesTable(attachedDatabase, alias);
+  }
+}
+
+class Hike extends DataClass implements Insertable<Hike> {
+  final String id;
+  final String courseId;
+  final String courseName;
+  final String mountainGroup;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+
+  /// recording / completed / partial / discarded  ([HikeStatus] 이름)
+  final String status;
+  final double distanceKm;
+
+  /// 종료 시 계산한 코스 커버율 (0~1). 완주 판정 제안에 사용
+  final double? coverage;
+
+  /// 서버 visits에 올라간 시각. null = 전송 대기
+  final DateTime? syncedAt;
+  final String? visitId;
+  const Hike({
+    required this.id,
+    required this.courseId,
+    required this.courseName,
+    required this.mountainGroup,
+    required this.startedAt,
+    this.endedAt,
+    required this.status,
+    required this.distanceKm,
+    this.coverage,
+    this.syncedAt,
+    this.visitId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['course_id'] = Variable<String>(courseId);
+    map['course_name'] = Variable<String>(courseName);
+    map['mountain_group'] = Variable<String>(mountainGroup);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<DateTime>(endedAt);
+    }
+    map['status'] = Variable<String>(status);
+    map['distance_km'] = Variable<double>(distanceKm);
+    if (!nullToAbsent || coverage != null) {
+      map['coverage'] = Variable<double>(coverage);
+    }
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<DateTime>(syncedAt);
+    }
+    if (!nullToAbsent || visitId != null) {
+      map['visit_id'] = Variable<String>(visitId);
+    }
+    return map;
+  }
+
+  HikesCompanion toCompanion(bool nullToAbsent) {
+    return HikesCompanion(
+      id: Value(id),
+      courseId: Value(courseId),
+      courseName: Value(courseName),
+      mountainGroup: Value(mountainGroup),
+      startedAt: Value(startedAt),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
+      status: Value(status),
+      distanceKm: Value(distanceKm),
+      coverage: coverage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coverage),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
+      visitId: visitId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(visitId),
+    );
+  }
+
+  factory Hike.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Hike(
+      id: serializer.fromJson<String>(json['id']),
+      courseId: serializer.fromJson<String>(json['courseId']),
+      courseName: serializer.fromJson<String>(json['courseName']),
+      mountainGroup: serializer.fromJson<String>(json['mountainGroup']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      status: serializer.fromJson<String>(json['status']),
+      distanceKm: serializer.fromJson<double>(json['distanceKm']),
+      coverage: serializer.fromJson<double?>(json['coverage']),
+      syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+      visitId: serializer.fromJson<String?>(json['visitId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'courseId': serializer.toJson<String>(courseId),
+      'courseName': serializer.toJson<String>(courseName),
+      'mountainGroup': serializer.toJson<String>(mountainGroup),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'status': serializer.toJson<String>(status),
+      'distanceKm': serializer.toJson<double>(distanceKm),
+      'coverage': serializer.toJson<double?>(coverage),
+      'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+      'visitId': serializer.toJson<String?>(visitId),
+    };
+  }
+
+  Hike copyWith({
+    String? id,
+    String? courseId,
+    String? courseName,
+    String? mountainGroup,
+    DateTime? startedAt,
+    Value<DateTime?> endedAt = const Value.absent(),
+    String? status,
+    double? distanceKm,
+    Value<double?> coverage = const Value.absent(),
+    Value<DateTime?> syncedAt = const Value.absent(),
+    Value<String?> visitId = const Value.absent(),
+  }) => Hike(
+    id: id ?? this.id,
+    courseId: courseId ?? this.courseId,
+    courseName: courseName ?? this.courseName,
+    mountainGroup: mountainGroup ?? this.mountainGroup,
+    startedAt: startedAt ?? this.startedAt,
+    endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    status: status ?? this.status,
+    distanceKm: distanceKm ?? this.distanceKm,
+    coverage: coverage.present ? coverage.value : this.coverage,
+    syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+    visitId: visitId.present ? visitId.value : this.visitId,
+  );
+  Hike copyWithCompanion(HikesCompanion data) {
+    return Hike(
+      id: data.id.present ? data.id.value : this.id,
+      courseId: data.courseId.present ? data.courseId.value : this.courseId,
+      courseName: data.courseName.present
+          ? data.courseName.value
+          : this.courseName,
+      mountainGroup: data.mountainGroup.present
+          ? data.mountainGroup.value
+          : this.mountainGroup,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      status: data.status.present ? data.status.value : this.status,
+      distanceKm: data.distanceKm.present
+          ? data.distanceKm.value
+          : this.distanceKm,
+      coverage: data.coverage.present ? data.coverage.value : this.coverage,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+      visitId: data.visitId.present ? data.visitId.value : this.visitId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Hike(')
+          ..write('id: $id, ')
+          ..write('courseId: $courseId, ')
+          ..write('courseName: $courseName, ')
+          ..write('mountainGroup: $mountainGroup, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('status: $status, ')
+          ..write('distanceKm: $distanceKm, ')
+          ..write('coverage: $coverage, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('visitId: $visitId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    courseId,
+    courseName,
+    mountainGroup,
+    startedAt,
+    endedAt,
+    status,
+    distanceKm,
+    coverage,
+    syncedAt,
+    visitId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Hike &&
+          other.id == this.id &&
+          other.courseId == this.courseId &&
+          other.courseName == this.courseName &&
+          other.mountainGroup == this.mountainGroup &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt &&
+          other.status == this.status &&
+          other.distanceKm == this.distanceKm &&
+          other.coverage == this.coverage &&
+          other.syncedAt == this.syncedAt &&
+          other.visitId == this.visitId);
+}
+
+class HikesCompanion extends UpdateCompanion<Hike> {
+  final Value<String> id;
+  final Value<String> courseId;
+  final Value<String> courseName;
+  final Value<String> mountainGroup;
+  final Value<DateTime> startedAt;
+  final Value<DateTime?> endedAt;
+  final Value<String> status;
+  final Value<double> distanceKm;
+  final Value<double?> coverage;
+  final Value<DateTime?> syncedAt;
+  final Value<String?> visitId;
+  final Value<int> rowid;
+  const HikesCompanion({
+    this.id = const Value.absent(),
+    this.courseId = const Value.absent(),
+    this.courseName = const Value.absent(),
+    this.mountainGroup = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.distanceKm = const Value.absent(),
+    this.coverage = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.visitId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HikesCompanion.insert({
+    required String id,
+    required String courseId,
+    required String courseName,
+    required String mountainGroup,
+    required DateTime startedAt,
+    this.endedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.distanceKm = const Value.absent(),
+    this.coverage = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.visitId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       courseId = Value(courseId),
+       courseName = Value(courseName),
+       mountainGroup = Value(mountainGroup),
+       startedAt = Value(startedAt);
+  static Insertable<Hike> custom({
+    Expression<String>? id,
+    Expression<String>? courseId,
+    Expression<String>? courseName,
+    Expression<String>? mountainGroup,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? endedAt,
+    Expression<String>? status,
+    Expression<double>? distanceKm,
+    Expression<double>? coverage,
+    Expression<DateTime>? syncedAt,
+    Expression<String>? visitId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (courseId != null) 'course_id': courseId,
+      if (courseName != null) 'course_name': courseName,
+      if (mountainGroup != null) 'mountain_group': mountainGroup,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (status != null) 'status': status,
+      if (distanceKm != null) 'distance_km': distanceKm,
+      if (coverage != null) 'coverage': coverage,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (visitId != null) 'visit_id': visitId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HikesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? courseId,
+    Value<String>? courseName,
+    Value<String>? mountainGroup,
+    Value<DateTime>? startedAt,
+    Value<DateTime?>? endedAt,
+    Value<String>? status,
+    Value<double>? distanceKm,
+    Value<double?>? coverage,
+    Value<DateTime?>? syncedAt,
+    Value<String?>? visitId,
+    Value<int>? rowid,
+  }) {
+    return HikesCompanion(
+      id: id ?? this.id,
+      courseId: courseId ?? this.courseId,
+      courseName: courseName ?? this.courseName,
+      mountainGroup: mountainGroup ?? this.mountainGroup,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      status: status ?? this.status,
+      distanceKm: distanceKm ?? this.distanceKm,
+      coverage: coverage ?? this.coverage,
+      syncedAt: syncedAt ?? this.syncedAt,
+      visitId: visitId ?? this.visitId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (courseId.present) {
+      map['course_id'] = Variable<String>(courseId.value);
+    }
+    if (courseName.present) {
+      map['course_name'] = Variable<String>(courseName.value);
+    }
+    if (mountainGroup.present) {
+      map['mountain_group'] = Variable<String>(mountainGroup.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (distanceKm.present) {
+      map['distance_km'] = Variable<double>(distanceKm.value);
+    }
+    if (coverage.present) {
+      map['coverage'] = Variable<double>(coverage.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (visitId.present) {
+      map['visit_id'] = Variable<String>(visitId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HikesCompanion(')
+          ..write('id: $id, ')
+          ..write('courseId: $courseId, ')
+          ..write('courseName: $courseName, ')
+          ..write('mountainGroup: $mountainGroup, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('status: $status, ')
+          ..write('distanceKm: $distanceKm, ')
+          ..write('coverage: $coverage, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('visitId: $visitId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TrackPointsTable extends TrackPoints
+    with TableInfo<$TrackPointsTable, TrackPoint> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrackPointsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _hikeIdMeta = const VerificationMeta('hikeId');
+  @override
+  late final GeneratedColumn<String> hikeId = GeneratedColumn<String>(
+    'hike_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES hikes (id)',
+    ),
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordedAt = GeneratedColumn<DateTime>(
+    'recorded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+    'lat',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lonMeta = const VerificationMeta('lon');
+  @override
+  late final GeneratedColumn<double> lon = GeneratedColumn<double>(
+    'lon',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accuracyMMeta = const VerificationMeta(
+    'accuracyM',
+  );
+  @override
+  late final GeneratedColumn<double> accuracyM = GeneratedColumn<double>(
+    'accuracy_m',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _altitudeMMeta = const VerificationMeta(
+    'altitudeM',
+  );
+  @override
+  late final GeneratedColumn<double> altitudeM = GeneratedColumn<double>(
+    'altitude_m',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    seq,
+    hikeId,
+    recordedAt,
+    lat,
+    lon,
+    accuracyM,
+    altitudeM,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'track_points';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrackPoint> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    }
+    if (data.containsKey('hike_id')) {
+      context.handle(
+        _hikeIdMeta,
+        hikeId.isAcceptableOrUnknown(data['hike_id']!, _hikeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hikeIdMeta);
+    }
+    if (data.containsKey('recorded_at')) {
+      context.handle(
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMeta);
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+        _latMeta,
+        lat.isAcceptableOrUnknown(data['lat']!, _latMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_latMeta);
+    }
+    if (data.containsKey('lon')) {
+      context.handle(
+        _lonMeta,
+        lon.isAcceptableOrUnknown(data['lon']!, _lonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lonMeta);
+    }
+    if (data.containsKey('accuracy_m')) {
+      context.handle(
+        _accuracyMMeta,
+        accuracyM.isAcceptableOrUnknown(data['accuracy_m']!, _accuracyMMeta),
+      );
+    }
+    if (data.containsKey('altitude_m')) {
+      context.handle(
+        _altitudeMMeta,
+        altitudeM.isAcceptableOrUnknown(data['altitude_m']!, _altitudeMMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {seq};
+  @override
+  TrackPoint map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrackPoint(
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      hikeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hike_id'],
+      )!,
+      recordedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}recorded_at'],
+      )!,
+      lat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lat'],
+      )!,
+      lon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lon'],
+      )!,
+      accuracyM: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}accuracy_m'],
+      ),
+      altitudeM: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}altitude_m'],
+      ),
+    );
+  }
+
+  @override
+  $TrackPointsTable createAlias(String alias) {
+    return $TrackPointsTable(attachedDatabase, alias);
+  }
+}
+
+class TrackPoint extends DataClass implements Insertable<TrackPoint> {
+  final int seq;
+  final String hikeId;
+  final DateTime recordedAt;
+  final double lat;
+  final double lon;
+  final double? accuracyM;
+  final double? altitudeM;
+  const TrackPoint({
+    required this.seq,
+    required this.hikeId,
+    required this.recordedAt,
+    required this.lat,
+    required this.lon,
+    this.accuracyM,
+    this.altitudeM,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['seq'] = Variable<int>(seq);
+    map['hike_id'] = Variable<String>(hikeId);
+    map['recorded_at'] = Variable<DateTime>(recordedAt);
+    map['lat'] = Variable<double>(lat);
+    map['lon'] = Variable<double>(lon);
+    if (!nullToAbsent || accuracyM != null) {
+      map['accuracy_m'] = Variable<double>(accuracyM);
+    }
+    if (!nullToAbsent || altitudeM != null) {
+      map['altitude_m'] = Variable<double>(altitudeM);
+    }
+    return map;
+  }
+
+  TrackPointsCompanion toCompanion(bool nullToAbsent) {
+    return TrackPointsCompanion(
+      seq: Value(seq),
+      hikeId: Value(hikeId),
+      recordedAt: Value(recordedAt),
+      lat: Value(lat),
+      lon: Value(lon),
+      accuracyM: accuracyM == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accuracyM),
+      altitudeM: altitudeM == null && nullToAbsent
+          ? const Value.absent()
+          : Value(altitudeM),
+    );
+  }
+
+  factory TrackPoint.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrackPoint(
+      seq: serializer.fromJson<int>(json['seq']),
+      hikeId: serializer.fromJson<String>(json['hikeId']),
+      recordedAt: serializer.fromJson<DateTime>(json['recordedAt']),
+      lat: serializer.fromJson<double>(json['lat']),
+      lon: serializer.fromJson<double>(json['lon']),
+      accuracyM: serializer.fromJson<double?>(json['accuracyM']),
+      altitudeM: serializer.fromJson<double?>(json['altitudeM']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'seq': serializer.toJson<int>(seq),
+      'hikeId': serializer.toJson<String>(hikeId),
+      'recordedAt': serializer.toJson<DateTime>(recordedAt),
+      'lat': serializer.toJson<double>(lat),
+      'lon': serializer.toJson<double>(lon),
+      'accuracyM': serializer.toJson<double?>(accuracyM),
+      'altitudeM': serializer.toJson<double?>(altitudeM),
+    };
+  }
+
+  TrackPoint copyWith({
+    int? seq,
+    String? hikeId,
+    DateTime? recordedAt,
+    double? lat,
+    double? lon,
+    Value<double?> accuracyM = const Value.absent(),
+    Value<double?> altitudeM = const Value.absent(),
+  }) => TrackPoint(
+    seq: seq ?? this.seq,
+    hikeId: hikeId ?? this.hikeId,
+    recordedAt: recordedAt ?? this.recordedAt,
+    lat: lat ?? this.lat,
+    lon: lon ?? this.lon,
+    accuracyM: accuracyM.present ? accuracyM.value : this.accuracyM,
+    altitudeM: altitudeM.present ? altitudeM.value : this.altitudeM,
+  );
+  TrackPoint copyWithCompanion(TrackPointsCompanion data) {
+    return TrackPoint(
+      seq: data.seq.present ? data.seq.value : this.seq,
+      hikeId: data.hikeId.present ? data.hikeId.value : this.hikeId,
+      recordedAt: data.recordedAt.present
+          ? data.recordedAt.value
+          : this.recordedAt,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lon: data.lon.present ? data.lon.value : this.lon,
+      accuracyM: data.accuracyM.present ? data.accuracyM.value : this.accuracyM,
+      altitudeM: data.altitudeM.present ? data.altitudeM.value : this.altitudeM,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrackPoint(')
+          ..write('seq: $seq, ')
+          ..write('hikeId: $hikeId, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('lat: $lat, ')
+          ..write('lon: $lon, ')
+          ..write('accuracyM: $accuracyM, ')
+          ..write('altitudeM: $altitudeM')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(seq, hikeId, recordedAt, lat, lon, accuracyM, altitudeM);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrackPoint &&
+          other.seq == this.seq &&
+          other.hikeId == this.hikeId &&
+          other.recordedAt == this.recordedAt &&
+          other.lat == this.lat &&
+          other.lon == this.lon &&
+          other.accuracyM == this.accuracyM &&
+          other.altitudeM == this.altitudeM);
+}
+
+class TrackPointsCompanion extends UpdateCompanion<TrackPoint> {
+  final Value<int> seq;
+  final Value<String> hikeId;
+  final Value<DateTime> recordedAt;
+  final Value<double> lat;
+  final Value<double> lon;
+  final Value<double?> accuracyM;
+  final Value<double?> altitudeM;
+  const TrackPointsCompanion({
+    this.seq = const Value.absent(),
+    this.hikeId = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lon = const Value.absent(),
+    this.accuracyM = const Value.absent(),
+    this.altitudeM = const Value.absent(),
+  });
+  TrackPointsCompanion.insert({
+    this.seq = const Value.absent(),
+    required String hikeId,
+    required DateTime recordedAt,
+    required double lat,
+    required double lon,
+    this.accuracyM = const Value.absent(),
+    this.altitudeM = const Value.absent(),
+  }) : hikeId = Value(hikeId),
+       recordedAt = Value(recordedAt),
+       lat = Value(lat),
+       lon = Value(lon);
+  static Insertable<TrackPoint> custom({
+    Expression<int>? seq,
+    Expression<String>? hikeId,
+    Expression<DateTime>? recordedAt,
+    Expression<double>? lat,
+    Expression<double>? lon,
+    Expression<double>? accuracyM,
+    Expression<double>? altitudeM,
+  }) {
+    return RawValuesInsertable({
+      if (seq != null) 'seq': seq,
+      if (hikeId != null) 'hike_id': hikeId,
+      if (recordedAt != null) 'recorded_at': recordedAt,
+      if (lat != null) 'lat': lat,
+      if (lon != null) 'lon': lon,
+      if (accuracyM != null) 'accuracy_m': accuracyM,
+      if (altitudeM != null) 'altitude_m': altitudeM,
+    });
+  }
+
+  TrackPointsCompanion copyWith({
+    Value<int>? seq,
+    Value<String>? hikeId,
+    Value<DateTime>? recordedAt,
+    Value<double>? lat,
+    Value<double>? lon,
+    Value<double?>? accuracyM,
+    Value<double?>? altitudeM,
+  }) {
+    return TrackPointsCompanion(
+      seq: seq ?? this.seq,
+      hikeId: hikeId ?? this.hikeId,
+      recordedAt: recordedAt ?? this.recordedAt,
+      lat: lat ?? this.lat,
+      lon: lon ?? this.lon,
+      accuracyM: accuracyM ?? this.accuracyM,
+      altitudeM: altitudeM ?? this.altitudeM,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (hikeId.present) {
+      map['hike_id'] = Variable<String>(hikeId.value);
+    }
+    if (recordedAt.present) {
+      map['recorded_at'] = Variable<DateTime>(recordedAt.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lon.present) {
+      map['lon'] = Variable<double>(lon.value);
+    }
+    if (accuracyM.present) {
+      map['accuracy_m'] = Variable<double>(accuracyM.value);
+    }
+    if (altitudeM.present) {
+      map['altitude_m'] = Variable<double>(altitudeM.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrackPointsCompanion(')
+          ..write('seq: $seq, ')
+          ..write('hikeId: $hikeId, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('lat: $lat, ')
+          ..write('lon: $lon, ')
+          ..write('accuracyM: $accuracyM, ')
+          ..write('altitudeM: $altitudeM')
+          ..write(')'))
+        .toString();
+  }
+}
+
+abstract class _$AppDatabase extends GeneratedDatabase {
+  _$AppDatabase(QueryExecutor e) : super(e);
+  $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $HikesTable hikes = $HikesTable(this);
+  late final $TrackPointsTable trackPoints = $TrackPointsTable(this);
+  @override
+  Iterable<TableInfo<Table, Object?>> get allTables =>
+      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  @override
+  List<DatabaseSchemaEntity> get allSchemaEntities => [hikes, trackPoints];
+}
+
+typedef $$HikesTableCreateCompanionBuilder = HikesCompanion Function({
+  required String id,
+  required String courseId,
+  required String courseName,
+  required String mountainGroup,
+  required DateTime startedAt,
+  Value<DateTime?> endedAt,
+  Value<String> status,
+  Value<double> distanceKm,
+  Value<double?> coverage,
+  Value<DateTime?> syncedAt,
+  Value<String?> visitId,
+  Value<int> rowid,
+});
+typedef $$HikesTableUpdateCompanionBuilder = HikesCompanion Function({
+  Value<String> id,
+  Value<String> courseId,
+  Value<String> courseName,
+  Value<String> mountainGroup,
+  Value<DateTime> startedAt,
+  Value<DateTime?> endedAt,
+  Value<String> status,
+  Value<double> distanceKm,
+  Value<double?> coverage,
+  Value<DateTime?> syncedAt,
+  Value<String?> visitId,
+  Value<int> rowid,
+});
+
+final class $$HikesTableReferences
+    extends BaseReferences<_$AppDatabase, $HikesTable, Hike> {
+  $$HikesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$TrackPointsTable, List<TrackPoint>>
+  _trackPointsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.trackPoints,
+    aliasName: 'hikes__id__track_points__hike_id',
+  );
+
+  $$TrackPointsTableProcessedTableManager get trackPointsRefs {
+    final manager = $$TrackPointsTableTableManager(
+      $_db,
+      $_db.trackPoints,
+    ).filter((f) => f.hikeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_trackPointsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$HikesTableFilterComposer extends Composer<_$AppDatabase, $HikesTable> {
+  $$HikesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get courseId => $composableBuilder(
+    column: $table.courseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get courseName => $composableBuilder(
+    column: $table.courseName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mountainGroup => $composableBuilder(
+    column: $table.mountainGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get distanceKm => $composableBuilder(
+    column: $table.distanceKm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get coverage => $composableBuilder(
+    column: $table.coverage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get visitId => $composableBuilder(
+    column: $table.visitId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> trackPointsRefs(
+    Expression<bool> Function($$TrackPointsTableFilterComposer f) f,
+  ) {
+    final $$TrackPointsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.trackPoints,
+      getReferencedColumn: (t) => t.hikeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrackPointsTableFilterComposer(
+            $db: $db,
+            $table: $db.trackPoints,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$HikesTableOrderingComposer
+    extends Composer<_$AppDatabase, $HikesTable> {
+  $$HikesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get courseId => $composableBuilder(
+    column: $table.courseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get courseName => $composableBuilder(
+    column: $table.courseName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mountainGroup => $composableBuilder(
+    column: $table.mountainGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get distanceKm => $composableBuilder(
+    column: $table.distanceKm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get coverage => $composableBuilder(
+    column: $table.coverage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get visitId => $composableBuilder(
+    column: $table.visitId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HikesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HikesTable> {
+  $$HikesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get courseId =>
+      $composableBuilder(column: $table.courseId, builder: (column) => column);
+
+  GeneratedColumn<String> get courseName => $composableBuilder(
+    column: $table.courseName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mountainGroup => $composableBuilder(
+    column: $table.mountainGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<double> get distanceKm => $composableBuilder(
+    column: $table.distanceKm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get coverage =>
+      $composableBuilder(column: $table.coverage, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get visitId =>
+      $composableBuilder(column: $table.visitId, builder: (column) => column);
+
+  Expression<T> trackPointsRefs<T extends Object>(
+    Expression<T> Function($$TrackPointsTableAnnotationComposer a) f,
+  ) {
+    final $$TrackPointsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.trackPoints,
+      getReferencedColumn: (t) => t.hikeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrackPointsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.trackPoints,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$HikesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HikesTable,
+          Hike,
+          $$HikesTableFilterComposer,
+          $$HikesTableOrderingComposer,
+          $$HikesTableAnnotationComposer,
+          $$HikesTableCreateCompanionBuilder,
+          $$HikesTableUpdateCompanionBuilder,
+          (Hike, $$HikesTableReferences),
+          Hike,
+          PrefetchHooks Function({bool trackPointsRefs})
+        > {
+  $$HikesTableTableManager(_$AppDatabase db, $HikesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HikesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HikesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HikesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> courseId = const Value.absent(),
+                Value<String> courseName = const Value.absent(),
+                Value<String> mountainGroup = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<double> distanceKm = const Value.absent(),
+                Value<double?> coverage = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
+                Value<String?> visitId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HikesCompanion(
+                id: id,
+                courseId: courseId,
+                courseName: courseName,
+                mountainGroup: mountainGroup,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                status: status,
+                distanceKm: distanceKm,
+                coverage: coverage,
+                syncedAt: syncedAt,
+                visitId: visitId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String courseId,
+                required String courseName,
+                required String mountainGroup,
+                required DateTime startedAt,
+                Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<double> distanceKm = const Value.absent(),
+                Value<double?> coverage = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
+                Value<String?> visitId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HikesCompanion.insert(
+                id: id,
+                courseId: courseId,
+                courseName: courseName,
+                mountainGroup: mountainGroup,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                status: status,
+                distanceKm: distanceKm,
+                coverage: coverage,
+                syncedAt: syncedAt,
+                visitId: visitId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$HikesTable, Hike>(table),
+                  $$HikesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({trackPointsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (trackPointsRefs) db.trackPoints],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (trackPointsRefs)
+                    await $_getPrefetchedData<Hike, $HikesTable, TrackPoint>(
+                      currentTable: table,
+                      referencedTable: $$HikesTableReferences
+                          ._trackPointsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$HikesTableReferences(db, table, p0).trackPointsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.hikeId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$HikesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HikesTable,
+      Hike,
+      $$HikesTableFilterComposer,
+      $$HikesTableOrderingComposer,
+      $$HikesTableAnnotationComposer,
+      $$HikesTableCreateCompanionBuilder,
+      $$HikesTableUpdateCompanionBuilder,
+      (Hike, $$HikesTableReferences),
+      Hike,
+      PrefetchHooks Function({bool trackPointsRefs})
+    >;
+typedef $$TrackPointsTableCreateCompanionBuilder =
+    TrackPointsCompanion Function({
+      Value<int> seq,
+      required String hikeId,
+      required DateTime recordedAt,
+      required double lat,
+      required double lon,
+      Value<double?> accuracyM,
+      Value<double?> altitudeM,
+    });
+typedef $$TrackPointsTableUpdateCompanionBuilder =
+    TrackPointsCompanion Function({
+      Value<int> seq,
+      Value<String> hikeId,
+      Value<DateTime> recordedAt,
+      Value<double> lat,
+      Value<double> lon,
+      Value<double?> accuracyM,
+      Value<double?> altitudeM,
+    });
+
+final class $$TrackPointsTableReferences
+    extends BaseReferences<_$AppDatabase, $TrackPointsTable, TrackPoint> {
+  $$TrackPointsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $HikesTable _hikeIdTable(_$AppDatabase db) =>
+      db.hikes.createAlias('track_points__hike_id__hikes__id');
+
+  $$HikesTableProcessedTableManager get hikeId {
+    final $_column = $_itemColumn<String>('hike_id')!;
+
+    final manager = $$HikesTableTableManager(
+      $_db,
+      $_db.hikes,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_hikeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$TrackPointsTableFilterComposer
+    extends Composer<_$AppDatabase, $TrackPointsTable> {
+  $$TrackPointsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lon => $composableBuilder(
+    column: $table.lon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get accuracyM => $composableBuilder(
+    column: $table.accuracyM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get altitudeM => $composableBuilder(
+    column: $table.altitudeM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$HikesTableFilterComposer get hikeId {
+    final $$HikesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.hikeId,
+      referencedTable: $db.hikes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$HikesTableFilterComposer(
+            $db: $db,
+            $table: $db.hikes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TrackPointsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TrackPointsTable> {
+  $$TrackPointsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lon => $composableBuilder(
+    column: $table.lon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get accuracyM => $composableBuilder(
+    column: $table.accuracyM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get altitudeM => $composableBuilder(
+    column: $table.altitudeM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$HikesTableOrderingComposer get hikeId {
+    final $$HikesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.hikeId,
+      referencedTable: $db.hikes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$HikesTableOrderingComposer(
+            $db: $db,
+            $table: $db.hikes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TrackPointsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TrackPointsTable> {
+  $$TrackPointsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lon =>
+      $composableBuilder(column: $table.lon, builder: (column) => column);
+
+  GeneratedColumn<double> get accuracyM =>
+      $composableBuilder(column: $table.accuracyM, builder: (column) => column);
+
+  GeneratedColumn<double> get altitudeM =>
+      $composableBuilder(column: $table.altitudeM, builder: (column) => column);
+
+  $$HikesTableAnnotationComposer get hikeId {
+    final $$HikesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.hikeId,
+      referencedTable: $db.hikes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$HikesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.hikes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TrackPointsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TrackPointsTable,
+          TrackPoint,
+          $$TrackPointsTableFilterComposer,
+          $$TrackPointsTableOrderingComposer,
+          $$TrackPointsTableAnnotationComposer,
+          $$TrackPointsTableCreateCompanionBuilder,
+          $$TrackPointsTableUpdateCompanionBuilder,
+          (TrackPoint, $$TrackPointsTableReferences),
+          TrackPoint,
+          PrefetchHooks Function({bool hikeId})
+        > {
+  $$TrackPointsTableTableManager(_$AppDatabase db, $TrackPointsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrackPointsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrackPointsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrackPointsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> seq = const Value.absent(),
+                Value<String> hikeId = const Value.absent(),
+                Value<DateTime> recordedAt = const Value.absent(),
+                Value<double> lat = const Value.absent(),
+                Value<double> lon = const Value.absent(),
+                Value<double?> accuracyM = const Value.absent(),
+                Value<double?> altitudeM = const Value.absent(),
+              }) => TrackPointsCompanion(
+                seq: seq,
+                hikeId: hikeId,
+                recordedAt: recordedAt,
+                lat: lat,
+                lon: lon,
+                accuracyM: accuracyM,
+                altitudeM: altitudeM,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> seq = const Value.absent(),
+                required String hikeId,
+                required DateTime recordedAt,
+                required double lat,
+                required double lon,
+                Value<double?> accuracyM = const Value.absent(),
+                Value<double?> altitudeM = const Value.absent(),
+              }) => TrackPointsCompanion.insert(
+                seq: seq,
+                hikeId: hikeId,
+                recordedAt: recordedAt,
+                lat: lat,
+                lon: lon,
+                accuracyM: accuracyM,
+                altitudeM: altitudeM,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TrackPointsTable, TrackPoint>(table),
+                  $$TrackPointsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({hikeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (hikeId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.hikeId,
+                        referencedTable: $$TrackPointsTableReferences
+                            ._hikeIdTable(db),
+                        referencedColumn: $$TrackPointsTableReferences
+                            ._hikeIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$TrackPointsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TrackPointsTable,
+      TrackPoint,
+      $$TrackPointsTableFilterComposer,
+      $$TrackPointsTableOrderingComposer,
+      $$TrackPointsTableAnnotationComposer,
+      $$TrackPointsTableCreateCompanionBuilder,
+      $$TrackPointsTableUpdateCompanionBuilder,
+      (TrackPoint, $$TrackPointsTableReferences),
+      TrackPoint,
+      PrefetchHooks Function({bool hikeId})
+    >;
+
+class $AppDatabaseManager {
+  final _$AppDatabase _db;
+  $AppDatabaseManager(this._db);
+  $$HikesTableTableManager get hikes =>
+      $$HikesTableTableManager(_db, _db.hikes);
+  $$TrackPointsTableTableManager get trackPoints =>
+      $$TrackPointsTableTableManager(_db, _db.trackPoints);
+}

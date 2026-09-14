@@ -17,12 +17,34 @@ class MockLocationService implements LocationService {
         speedFactor = 1;
 
   MockLocationService.route(
-    this._route, {
+    List<GeoPoint> route, {
     this.interval = const Duration(seconds: 15),
     this.noiseMeters = 10,
     this.speedFactor = 1,
     this.label = 'Mock · 코스 재생',
-  }) : _fixed = _route.isEmpty ? null : _route.first;
+    double sampleSpacingM = 15,
+  })  : _route = resample(route, sampleSpacingM),
+        _fixed = route.isEmpty ? null : route.first;
+
+  /// 폴리라인을 [spacingM] 간격 점으로 리샘플 (실제 GPS는 걷는 속도 × 간격만큼 떨어진 점을 준다).
+  static List<GeoPoint> resample(List<GeoPoint> line, double spacingM) {
+    if (line.length < 2 || spacingM <= 0) return List.of(line);
+    final out = <GeoPoint>[line.first];
+    var carry = 0.0; // 다음 샘플까지 남은 거리(m)
+    for (var i = 1; i < line.length; i++) {
+      final a = line[i - 1], b = line[i];
+      final segM = distanceKm(a, b) * 1000;
+      var pos = spacingM - carry;
+      while (pos <= segM) {
+        final t = pos / segM;
+        out.add((lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t));
+        pos += spacingM;
+      }
+      carry = segM - (pos - spacingM);
+    }
+    if (out.last != line.last) out.add(line.last);
+    return out;
+  }
 
   /// 서울시청. 실기기 GPS 붙이기 전 기본 기준 위치.
   static const seoulCityHall = (lat: 37.5666, lon: 126.9784);
