@@ -6,6 +6,7 @@ mountains / nodes / segments / spots / courses 에 넣는다. 산군 이름은 �
   python3 tools/insert_test_route.py --name "출근길" --from 37.5405559,127.0683955 --to <lat>,<lon> \
       [--via <lat>,<lon> ...] [--group "[테스트] 출퇴근"] [--segment-m 250] [--dry-run]
   python3 tools/insert_test_route.py --delete-group "[테스트] 출퇴근"     # 전부 삭제
+  --manual : OSRM을 쓰지 않고 --from/--via/--to 점들을 직선으로 이어 폴리라인을 만든다 (직접 찍은 좌표용)
 
 같은 이름으로 다시 넣으면 코스는 새로 추가되고 구간은 id(경로 해시) 기준으로 upsert 된다.
 """
@@ -96,6 +97,7 @@ def main():
     ap.add_argument("--segment-m", type=int, default=250)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--delete-group")
+    ap.add_argument("--manual", action="store_true", help="OSRM 없이 찍은 점들을 직선으로 연결")
     a = ap.parse_args()
 
     if a.delete_group:
@@ -109,7 +111,11 @@ def main():
         sys.exit(f"테스트 산군 이름은 '{TEST_PREFIX}'로 시작해야 합니다 (릴리즈에서 숨기기 위해)")
 
     pts = [tuple(map(float, p.split(","))) for p in [a.src, *a.via, a.dst]]
-    line, dist_m = osrm_foot(pts)
+    if a.manual:
+        line = pts
+        dist_m = sum(km(pts[i - 1], pts[i]) for i in range(1, len(pts))) * 1000
+    else:
+        line, dist_m = osrm_foot(pts)
     parts = split_route(line, a.segment_m)
     gkey = hashlib.sha1(a.group.encode()).hexdigest()[:4]
 
@@ -140,7 +146,7 @@ def main():
     course = {"mountain_group": a.group, "name": f"{TEST_PREFIX} {a.name}", "segment_ids": seg_ids,
               "entrance_spot": entrance_id, "length_km": total_km, "est_up_min": up,
               "difficulty_score": round(total_km * 0.6 + up / 60 * 2, 2),
-              "description": f"실기기 GPS 검증용 테스트 경로 (OSRM 도보 경로, {dist_m:.0f}m). 릴리즈에는 표시되지 않음."}
+              "description": f"실기기 GPS 검증용 테스트 경로 ({'직접 찍은 경로' if a.manual else 'OSRM 도보 경로'}, {dist_m:.0f}m). 릴리즈에는 표시되지 않음."}
     print(f"경로 {dist_m:.0f}m · 점 {len(line)}개 → 구간 {len(segments)}개 · 도보 예상 {up}분")
     if a.dry_run:
         print(json.dumps({"mountain": mountain, "course": course}, ensure_ascii=False, indent=1)[:800])
