@@ -15,16 +15,16 @@ class HikeRepositoryImpl implements HikeRepository {
   @override
   Future<Hike> create({
     required String id,
-    required String courseId,
-    required String courseName,
-    required String mountainGroup,
     required DateTime startedAt,
+    String? courseId,
+    String? courseName,
+    String? mountainGroup,
   }) async {
     await _service.insertHike(db.HikesCompanion.insert(
       id: id,
-      courseId: courseId,
-      courseName: courseName,
-      mountainGroup: mountainGroup,
+      courseId: Value(courseId),
+      courseName: Value(courseName),
+      mountainGroup: Value(mountainGroup),
       startedAt: startedAt,
     ));
     return (await getById(id))!;
@@ -47,6 +47,9 @@ class HikeRepositoryImpl implements HikeRepository {
     required HikeStatus status,
     required double distanceKm,
     required double? coverage,
+    String? courseId,
+    String? courseName,
+    String? mountainGroup,
   }) =>
       _service.updateHike(
         hikeId,
@@ -55,6 +58,9 @@ class HikeRepositoryImpl implements HikeRepository {
           status: Value(status.name),
           distanceKm: Value(distanceKm),
           coverage: Value(coverage),
+          courseId: courseId == null ? const Value.absent() : Value(courseId),
+          courseName: courseName == null ? const Value.absent() : Value(courseName),
+          mountainGroup: mountainGroup == null ? const Value.absent() : Value(mountainGroup),
         ),
       );
 

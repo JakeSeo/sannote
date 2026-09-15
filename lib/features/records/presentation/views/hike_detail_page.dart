@@ -19,7 +19,7 @@ class HikeDetailPage extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(detail.value?.hike.courseName ?? '기록'),
+        title: Text(detail.value?.hike.displayName ?? '기록'),
         actions: [
           if (detail.value != null)
             IconButton(
@@ -71,6 +71,7 @@ class HikeDetailPage extends ConsumerWidget {
                   Text(
                     [
                       'GPS 점 ${d.track.length}개',
+                      if (!h.hasCourse) '자유 산행 (코스 미확정)',
                       if (h.coverage != null) '코스 커버율 약 ${(h.coverage! * 100).round()}%',
                       if (h.isCompleted) (h.syncedAt == null ? '서버 전송 대기' : '서버 전송 완료'),
                     ].join(' · '),

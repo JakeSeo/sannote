@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/location/geolocator_location_service.dart';
 import '../../../../core/location/location_provider.dart';
-import '../../../../core/prefs/app_prefs.dart';
 import '../../../courses/domain/entities/course_stats.dart';
 import '../../../courses/domain/entities/course_summary.dart';
 import '../../../courses/domain/usecases/filter_courses.dart';
@@ -34,9 +33,8 @@ class ExploreViewModel extends Notifier<ExploreState> {
     state = state.copyWith(courses: r);
   }
 
-  /// 시작 시에는 사용자가 이전에 [내 위치 사용]을 켠 경우에만 위치를 읽는다. 위치 API를 아예 건드리지 않아 팝업이 없다.
+  /// 팝업 없이, 이미 허용된 권한이 있을 때만 읽는다 (권한 요청은 지도 홈이 맡음).
   Future<void> _loadReference() async {
-    if (!await ref.read(appPrefsProvider).locationOptIn) return;
     final pos = await ref.read(locationServiceProvider).current();
     if (pos != null) state = state.copyWith(reference: pos);
   }
@@ -47,7 +45,6 @@ class ExploreViewModel extends Notifier<ExploreState> {
     if (service is GeolocatorLocationService && !await GeolocatorLocationService.ensurePermission()) return false;
     final pos = await service.current();
     if (pos == null) return false;
-    await ref.read(appPrefsProvider).setLocationOptIn(true);
     state = state.copyWith(reference: pos);
     return true;
   }

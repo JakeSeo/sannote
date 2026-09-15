@@ -30,14 +30,14 @@ class SyncVisits {
       try {
         final visitId = await _visits.insert(
           userId: userId,
-          courseId: h.courseId,
+          courseId: h.courseId!,
           visitedAt: h.startedAt,
           durationMin: h.durationMin,
         );
         await _hikes.markSynced(h.id, visitId: visitId, syncedAt: DateTime.now());
         ok++;
       } catch (e) {
-        debugPrint('[sync] visits 전송 실패(${h.courseName}): $e');
+        debugPrint('[sync] visits 전송 실패(${h.displayName}): $e');
       }
     }
     debugPrint('[sync] visits 전송 $ok/${pending.length}건');

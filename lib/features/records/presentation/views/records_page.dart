@@ -92,7 +92,7 @@ class RecordsPage extends ConsumerWidget {
                                 },
                                 color: h.isCompleted ? scheme.primary : scheme.outline,
                               ),
-                              title: Text(h.courseName),
+                              title: Text(h.displayName),
                               subtitle: Text(
                                 '${_date(h.startedAt)} · ${h.distanceKm.toStringAsFixed(1)}km · ${formatMinutes(h.durationMin)}',
                                 style: text.bodySmall,

@@ -16,7 +16,7 @@ class GetConquestStats {
     required List<TrailSegment> segments,
     required List<Spot> entrances,
   }) {
-    final completedCourseIds = {for (final h in hikes) if (h.isCompleted) h.courseId};
+    final completedCourseIds = {for (final h in hikes) if (h.isCompleted) h.courseId!};
     if (completedCourseIds.isEmpty) return ConquestStats.empty;
     final courseById = {for (final c in courses) c.courseId: c};
     final segById = {for (final s in segments) s.segmentId: s};

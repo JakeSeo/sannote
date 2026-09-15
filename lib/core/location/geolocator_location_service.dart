@@ -35,6 +35,16 @@ class GeolocatorLocationService implements LocationService {
   @override
   Future<GeoPoint?> current() async {
     if (!await hasPermission()) return null;
+    return _read();
+  }
+
+  @override
+  Future<GeoPoint?> currentWithPermission() async {
+    if (!await ensurePermission()) return null;
+    return _read();
+  }
+
+  Future<GeoPoint?> _read() async {
     try {
       final p = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 15)),

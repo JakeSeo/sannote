@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/geo/geo_point.dart';
+import '../../../../core/location/location_provider.dart';
 import '../../../courses/domain/entities/course.dart';
 import '../../../courses/domain/usecases/build_course_polyline.dart';
 import '../../../courses/domain/usecases/compute_course_stats.dart';
@@ -9,6 +10,7 @@ import '../../../courses/domain/usecases/get_courses.dart';
 import '../../../mountains/domain/entities/mountain.dart';
 import '../../../mountains/domain/usecases/get_mountains.dart';
 import '../../../records/presentation/viewmodels/records_providers.dart';
+import '../../../records/presentation/viewmodels/recording_view_model.dart';
 import '../../../spots/domain/usecases/get_entrances.dart';
 import '../../../trails/domain/entities/trail_segment.dart';
 import '../../../trails/domain/usecases/get_trail_network.dart';
@@ -20,6 +22,9 @@ class MapViewModel extends Notifier<MapState> {
   static const overviewCenter = (lat: 37.555, lon: 127.02);
   static const overviewZoom = 10.0;
   static const focusZoom = 13.0;
+
+  /// 내 위치 기준 카메라 줌 (반경 약 5km가 보여 가까운 산이 함께 잡힘)
+  static const myLocationZoom = 12.5;
 
   /// 이 줌 이상에서 카메라 중심 근처 산군을 자동 선택, 미만이면 선택 해제
   static const autoFocusZoom = 12.0;
@@ -35,7 +40,30 @@ class MapViewModel extends Notifier<MapState> {
       final v = next.value;
       if (v != null) state = state.copyWith(conquest: v);
     }, fireImmediately: true);
+    // 기록 중에는 기록 스트림의 마지막 위치를 내 위치로 쓴다 (GPS를 두 번 켜지 않기 위해)
+    ref.listen(recordingViewModelProvider.select((s) => s.track.lastOrNull), (_, p) {
+      if (p != null) state = state.copyWith(myLocation: p);
+    });
     return const MapState();
+  }
+
+  // ---------- 내 위치 ----------
+
+  /// 지도가 준비되면 호출. 권한을 요청하고(맥락: 지도) 내 위치로 카메라를 맞춘다.
+  /// 거부되면 7개 산군 개요 카메라를 유지하고 안내 문구를 띄운다.
+  Future<void> locateMe({bool moveCamera = true}) async {
+    final pos = await ref.read(locationServiceProvider).currentWithPermission();
+    if (pos == null) {
+      debugPrint('[map] 내 위치 없음 (권한 거부 또는 실패) → 개요 유지');
+      state = state.copyWith(locationDenied: true);
+      return;
+    }
+    debugPrint('[map] 내 위치 ${pos.lat.toStringAsFixed(5)}, ${pos.lon.toStringAsFixed(5)}');
+    state = state.copyWith(
+      myLocation: pos,
+      locationDenied: false,
+      cameraCommand: moveCamera ? CameraFocus(++_cameraSeq, pos, myLocationZoom) : null,
+    );
   }
 
   // ---------- 데이터 로드 ----------
@@ -112,11 +140,13 @@ class MapViewModel extends Notifier<MapState> {
     );
   }
 
+  /// 카드 닫기: 내 위치가 있으면 내 위치 기준으로, 없으면 7개 산군 개요로
   void showOverview() {
+    final me = state.myLocation;
     state = state.copyWith(
       selectedMountainGroup: null,
       selectedCourse: null,
-      cameraCommand: CameraOverview(++_cameraSeq),
+      cameraCommand: me == null ? CameraOverview(++_cameraSeq) : CameraFocus(++_cameraSeq, me, myLocationZoom),
     );
   }
 

@@ -28,19 +28,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     ref.listen(recordingViewModelProvider.select((s) => s.resumable), (_, hike) {
       if (hike != null) _askResume(hike);
     });
-    final recording = ref.watch(recordingViewModelProvider.select((s) => s.isRecording));
     return Scaffold(
       body: IndexedStack(
         index: _index,
         children: const [MapHomePage(), ExplorePage(), RecordsPage()],
       ),
-      floatingActionButton: recording
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage())),
-              icon: const Icon(Icons.fiber_manual_record),
-              label: const Text('기록 중'),
-            )
-          : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
@@ -60,7 +52,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('끝내지 않은 산행이 있어요'),
-        content: Text('${hike.courseName} · ${hike.startedAt.month}/${hike.startedAt.day} 시작\n이어서 기록할까요?'),
+        content: Text('${hike.displayName} · ${hike.startedAt.month}/${hike.startedAt.day} 시작\n이어서 기록할까요?'),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop('finish'), child: const Text('일부로 저장하고 종료')),
           FilledButton(onPressed: () => Navigator.of(ctx).pop('resume'), child: const Text('이어가기')),
@@ -69,14 +61,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     );
     if (!mounted) return;
     final summaries = await ref.read(getCourseSummariesProvider).call();
-    final course = summaries.where((s) => s.course.courseId == hike.courseId).firstOrNull;
-    if (choice == 'resume' && course != null) {
-      await vm.resume(course);
+    final course = hike.courseId == null ? null : summaries.where((s) => s.course.courseId == hike.courseId).firstOrNull;
+    await vm.resume(course: course);
+    if (choice == 'resume') {
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage()));
     } else {
-      // 코스를 못 찾았거나 종료 선택: 커버율 없이 일부 기록으로 마감
-      await vm.resume(course ?? summaries.first);
       await vm.finish(HikeStatus.partial);
     }
     vm.dismissResumable();

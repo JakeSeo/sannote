@@ -5,6 +5,7 @@ import '../../../../core/location/location_provider.dart';
 import '../../../../core/location/mock_location_service.dart';
 import '../../domain/entities/hike.dart';
 import '../../domain/usecases/compute_course_coverage.dart';
+import '../../domain/usecases/match_course.dart';
 import '../viewmodels/recording_view_model.dart';
 import 'widgets/track_map.dart';
 
@@ -24,7 +25,7 @@ class RecordingPage extends ConsumerWidget {
     final course = state.course;
     final isMock = ref.watch(locationServiceProvider) is MockLocationService;
 
-    if (course == null || !state.isRecording) {
+    if (!state.isRecording) {
       // 종료 후 pop 되기 전 잠깐 또는 비정상 진입
       return Scaffold(appBar: AppBar(), body: const Center(child: Text('기록 중인 산행이 없어요')));
     }
@@ -35,12 +36,12 @@ class RecordingPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(course.course.name),
+        title: Text(course?.course.name ?? '자유 산행'),
         actions: [if (isMock) const Padding(padding: EdgeInsets.only(right: 12), child: Chip(label: Text('MOCK')))],
       ),
       body: Column(
         children: [
-          Expanded(child: TrackMap(course: course.polyline, track: state.track, live: true)),
+          Expanded(child: TrackMap(course: course?.polyline ?? const [], track: state.track, live: true)),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Column(
@@ -61,7 +62,12 @@ class RecordingPage extends ConsumerWidget {
                   Text(state.error!, style: text.bodySmall?.copyWith(color: scheme.error)),
                 ],
                 const SizedBox(height: 8),
-                Text('화면을 꺼도 기록은 계속돼요. 종료는 여기서 눌러주세요.', style: text.bodySmall),
+                Text(
+                  course == null
+                      ? '화면을 꺼도 기록은 계속돼요. 종료하면 어느 코스를 걸었는지 자동으로 찾아요.'
+                      : '화면을 꺼도 기록은 계속돼요. 종료는 여기서 눌러주세요.',
+                  style: text.bodySmall,
+                ),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
@@ -79,43 +85,51 @@ class RecordingPage extends ConsumerWidget {
     );
   }
 
-  /// 종료 확인: 커버율로 "제안"만 하고 완주/일부/삭제는 사용자가 고른다.
+  /// 종료 확인. 코스는 자동 판별 1위를 기본으로 보여주고, 사용자는 한 번만 확인한다 (수동 확인 단계).
   Future<void> _confirmFinish(BuildContext context, WidgetRef ref) async {
     final vm = ref.read(recordingViewModelProvider.notifier);
-    final coverage = vm.suggestCoverage();
-    final pct = (coverage * 100).round();
-    final suggestComplete = coverage >= ComputeCourseCoverage.suggestCompleteAt;
-    final status = await showDialog<HikeStatus>(
+    final matches = await vm.matchCourses();
+    if (!context.mounted) return;
+    final top = matches.firstOrNull;
+    final pct = top == null ? 0 : (top.coverage * 100).round();
+    final suggestComplete = top != null && top.coverage >= ComputeCourseCoverage.suggestCompleteAt;
+
+    final result = await showDialog<(HikeStatus, CourseMatch?)>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('산행을 종료할까요?'),
+        title: Text(top == null ? '산행을 종료할까요?' : top.course.course.name),
         content: Text(
-          '기록된 트랙이 코스의 약 $pct%를 지났어요.\n'
-          '${suggestComplete ? '완주로 기록하면 이 코스가 지도에 색칠돼요.' : '완주로 기록할지 직접 선택해주세요.'}',
+          top == null
+              ? '일치하는 코스를 찾지 못했어요. 자유 산행으로 저장할 수 있어요.'
+              : '이 코스의 약 $pct%를 걸으셨어요.\n'
+                  '${suggestComplete ? '완주로 기록하면 이 코스가 지도에 색칠돼요.' : '완주로 기록할지 직접 선택해주세요.'}'
+                  '${matches.length > 1 ? '\n\n다른 후보: ${matches.skip(1).take(2).map((m) => '${m.course.course.name} ${(m.coverage * 100).round()}%').join(', ')}' : ''}',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(HikeStatus.discarded),
+            onPressed: () => Navigator.of(ctx).pop((HikeStatus.discarded, null)),
             child: const Text('기록 삭제'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(HikeStatus.partial),
-            child: const Text('일부만 걸었어요'),
+            onPressed: () => Navigator.of(ctx).pop((HikeStatus.partial, top)),
+            child: Text(top == null ? '자유 산행으로 저장' : '일부만 걸었어요'),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(HikeStatus.completed),
-            child: const Text('완주로 기록'),
-          ),
+          if (top != null)
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop((HikeStatus.completed, top)),
+              child: const Text('완주로 기록'),
+            ),
         ],
       ),
     );
-    if (status == null || !context.mounted) return;
-    await vm.finish(status);
+    if (result == null || !context.mounted) return;
+    final (status, match) = result;
+    await vm.finish(status, match: match);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(switch (status) {
         HikeStatus.completed => '완주 기록이 저장됐어요. 지도에서 색칠된 길을 확인해보세요!',
-        HikeStatus.partial => '산행 기록이 저장됐어요.',
+        HikeStatus.partial => match == null ? '자유 산행으로 저장됐어요.' : '산행 기록이 저장됐어요.',
         _ => '기록을 삭제했어요.',
       }),
     ));

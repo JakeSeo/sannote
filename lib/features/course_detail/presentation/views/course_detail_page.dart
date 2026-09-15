@@ -199,7 +199,7 @@ Future<void> _startOrOpen(BuildContext context, WidgetRef ref, CourseSummary s, 
       ));
       return;
     }
-    await ref.read(recordingViewModelProvider.notifier).start(s);
+    await ref.read(recordingViewModelProvider.notifier).start(course: s);
   }
   if (!context.mounted) return;
   await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage()));

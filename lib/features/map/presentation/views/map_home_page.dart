@@ -3,6 +3,8 @@ import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/dev/developer_menu.dart';
+import '../../../records/presentation/viewmodels/recording_view_model.dart';
+import '../../../records/presentation/views/recording_page.dart';
 import '../viewmodels/map_state.dart';
 import '../viewmodels/map_view_model.dart';
 import 'map_overlay_sync.dart';
@@ -42,6 +44,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
 
     final mountain = state.selectedMountain;
     final course = state.selectedCourse;
+    final recording = ref.watch(recordingViewModelProvider);
 
     return Scaffold(
       body: LayoutBuilder(
@@ -72,6 +75,37 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
                   onLongPress: () => DeveloperMenu.show(context),
                 ),
               ),
+              // 내 위치 버튼 (우하단)
+              Positioned(
+                right: 12,
+                bottom: safe.bottom + (mountain != null ? 180 : 88),
+                child: FloatingActionButton.small(
+                  heroTag: 'my_location',
+                  tooltip: '내 위치',
+                  onPressed: () => vm.locateMe(),
+                  child: Icon(state.locationDenied ? Icons.location_disabled : Icons.my_location),
+                ),
+              ),
+              // 기록 시작 / 기록 중 (하단 중앙) — 산행의 시작과 끝은 이 화면에서
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: safe.bottom + (mountain != null ? 180 : 20),
+                child: Center(child: _RecordButton(recording: recording)),
+              ),
+              if (state.locationDenied && mountain == null)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: safe.bottom + 80,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      child: Text('위치 권한이 없어 서울 전체를 보여드려요. 설정에서 산노트의 위치 접근을 허용하면 내 주변 산부터 보여요.',
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ),
+                  ),
+                ),
               if (mountain != null)
                 Positioned(
                   left: 12,
@@ -99,6 +133,8 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
     _controller = controller;
     _sync = MapOverlaySync(controller, onMountainTap: ref.read(mapViewModelProvider.notifier).selectMountain);
     _sync!.apply(ref.read(mapViewModelProvider));
+    // 지도가 기준점 = 내 위치. 첫 진입에서 권한을 요청한다 (맥락이 분명한 곳)
+    ref.read(mapViewModelProvider.notifier).locateMe();
   }
 
   Future<void> _onCameraIdle() async {
@@ -147,5 +183,36 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
     ref.listen(mapViewModelProvider.select((s) => s.segments.hasError), (_, e) => e ? show('등산로') : null);
     ref.listen(mapViewModelProvider.select((s) => s.entrances.hasError), (_, e) => e ? show('입구 정보') : null);
     ref.listen(mapViewModelProvider.select((s) => s.courses.hasError), (_, e) => e ? show('코스 정보') : null);
+  }
+}
+
+
+/// 하단 중앙 기록 버튼. 기록 중이면 경과 시간을 보여주고 누르면 기록 화면으로.
+class _RecordButton extends ConsumerWidget {
+  const _RecordButton({required this.recording});
+
+  final RecordingState recording;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (recording.isRecording) {
+      final e = recording.elapsed;
+      final elapsed = '${e.inHours}:${(e.inMinutes % 60).toString().padLeft(2, '0')}:${(e.inSeconds % 60).toString().padLeft(2, '0')}';
+      return FilledButton.icon(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage())),
+        icon: const Icon(Icons.fiber_manual_record, color: Color(0xFFE53935)),
+        label: Text('기록 중 $elapsed'),
+      );
+    }
+    return FilledButton.icon(
+      onPressed: () async {
+        // 코스를 고르지 않고 시작. 종료 시 어느 코스를 걸었는지 자동 판별한다.
+        await ref.read(recordingViewModelProvider.notifier).start();
+        if (!context.mounted) return;
+        await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage()));
+      },
+      icon: const Icon(Icons.play_arrow),
+      label: const Text('기록 시작'),
+    );
   }
 }

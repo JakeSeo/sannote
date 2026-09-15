@@ -24,9 +24,9 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
   late final GeneratedColumn<String> courseId = GeneratedColumn<String>(
     'course_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _courseNameMeta = const VerificationMeta(
     'courseName',
@@ -35,9 +35,9 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
   late final GeneratedColumn<String> courseName = GeneratedColumn<String>(
     'course_name',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _mountainGroupMeta = const VerificationMeta(
     'mountainGroup',
@@ -46,9 +46,9 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
   late final GeneratedColumn<String> mountainGroup = GeneratedColumn<String>(
     'mountain_group',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _startedAtMeta = const VerificationMeta(
     'startedAt',
@@ -163,16 +163,12 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
         _courseIdMeta,
         courseId.isAcceptableOrUnknown(data['course_id']!, _courseIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_courseIdMeta);
     }
     if (data.containsKey('course_name')) {
       context.handle(
         _courseNameMeta,
         courseName.isAcceptableOrUnknown(data['course_name']!, _courseNameMeta),
       );
-    } else if (isInserting) {
-      context.missing(_courseNameMeta);
     }
     if (data.containsKey('mountain_group')) {
       context.handle(
@@ -182,8 +178,6 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
           _mountainGroupMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_mountainGroupMeta);
     }
     if (data.containsKey('started_at')) {
       context.handle(
@@ -245,15 +239,15 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
       courseId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}course_id'],
-      )!,
+      ),
       courseName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}course_name'],
-      )!,
+      ),
       mountainGroup: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}mountain_group'],
-      )!,
+      ),
       startedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}started_at'],
@@ -293,9 +287,11 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
 
 class Hike extends DataClass implements Insertable<Hike> {
   final String id;
-  final String courseId;
-  final String courseName;
-  final String mountainGroup;
+
+  /// null = 자유 산행 (코스를 고르지 않고 시작). 종료 시 자동 판별로 채워질 수 있다.
+  final String? courseId;
+  final String? courseName;
+  final String? mountainGroup;
   final DateTime startedAt;
   final DateTime? endedAt;
 
@@ -311,9 +307,9 @@ class Hike extends DataClass implements Insertable<Hike> {
   final String? visitId;
   const Hike({
     required this.id,
-    required this.courseId,
-    required this.courseName,
-    required this.mountainGroup,
+    this.courseId,
+    this.courseName,
+    this.mountainGroup,
     required this.startedAt,
     this.endedAt,
     required this.status,
@@ -326,9 +322,15 @@ class Hike extends DataClass implements Insertable<Hike> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['course_id'] = Variable<String>(courseId);
-    map['course_name'] = Variable<String>(courseName);
-    map['mountain_group'] = Variable<String>(mountainGroup);
+    if (!nullToAbsent || courseId != null) {
+      map['course_id'] = Variable<String>(courseId);
+    }
+    if (!nullToAbsent || courseName != null) {
+      map['course_name'] = Variable<String>(courseName);
+    }
+    if (!nullToAbsent || mountainGroup != null) {
+      map['mountain_group'] = Variable<String>(mountainGroup);
+    }
     map['started_at'] = Variable<DateTime>(startedAt);
     if (!nullToAbsent || endedAt != null) {
       map['ended_at'] = Variable<DateTime>(endedAt);
@@ -350,9 +352,15 @@ class Hike extends DataClass implements Insertable<Hike> {
   HikesCompanion toCompanion(bool nullToAbsent) {
     return HikesCompanion(
       id: Value(id),
-      courseId: Value(courseId),
-      courseName: Value(courseName),
-      mountainGroup: Value(mountainGroup),
+      courseId: courseId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(courseId),
+      courseName: courseName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(courseName),
+      mountainGroup: mountainGroup == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mountainGroup),
       startedAt: Value(startedAt),
       endedAt: endedAt == null && nullToAbsent
           ? const Value.absent()
@@ -378,9 +386,9 @@ class Hike extends DataClass implements Insertable<Hike> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Hike(
       id: serializer.fromJson<String>(json['id']),
-      courseId: serializer.fromJson<String>(json['courseId']),
-      courseName: serializer.fromJson<String>(json['courseName']),
-      mountainGroup: serializer.fromJson<String>(json['mountainGroup']),
+      courseId: serializer.fromJson<String?>(json['courseId']),
+      courseName: serializer.fromJson<String?>(json['courseName']),
+      mountainGroup: serializer.fromJson<String?>(json['mountainGroup']),
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
       status: serializer.fromJson<String>(json['status']),
@@ -395,9 +403,9 @@ class Hike extends DataClass implements Insertable<Hike> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'courseId': serializer.toJson<String>(courseId),
-      'courseName': serializer.toJson<String>(courseName),
-      'mountainGroup': serializer.toJson<String>(mountainGroup),
+      'courseId': serializer.toJson<String?>(courseId),
+      'courseName': serializer.toJson<String?>(courseName),
+      'mountainGroup': serializer.toJson<String?>(mountainGroup),
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'endedAt': serializer.toJson<DateTime?>(endedAt),
       'status': serializer.toJson<String>(status),
@@ -410,9 +418,9 @@ class Hike extends DataClass implements Insertable<Hike> {
 
   Hike copyWith({
     String? id,
-    String? courseId,
-    String? courseName,
-    String? mountainGroup,
+    Value<String?> courseId = const Value.absent(),
+    Value<String?> courseName = const Value.absent(),
+    Value<String?> mountainGroup = const Value.absent(),
     DateTime? startedAt,
     Value<DateTime?> endedAt = const Value.absent(),
     String? status,
@@ -422,9 +430,11 @@ class Hike extends DataClass implements Insertable<Hike> {
     Value<String?> visitId = const Value.absent(),
   }) => Hike(
     id: id ?? this.id,
-    courseId: courseId ?? this.courseId,
-    courseName: courseName ?? this.courseName,
-    mountainGroup: mountainGroup ?? this.mountainGroup,
+    courseId: courseId.present ? courseId.value : this.courseId,
+    courseName: courseName.present ? courseName.value : this.courseName,
+    mountainGroup: mountainGroup.present
+        ? mountainGroup.value
+        : this.mountainGroup,
     startedAt: startedAt ?? this.startedAt,
     endedAt: endedAt.present ? endedAt.value : this.endedAt,
     status: status ?? this.status,
@@ -506,9 +516,9 @@ class Hike extends DataClass implements Insertable<Hike> {
 
 class HikesCompanion extends UpdateCompanion<Hike> {
   final Value<String> id;
-  final Value<String> courseId;
-  final Value<String> courseName;
-  final Value<String> mountainGroup;
+  final Value<String?> courseId;
+  final Value<String?> courseName;
+  final Value<String?> mountainGroup;
   final Value<DateTime> startedAt;
   final Value<DateTime?> endedAt;
   final Value<String> status;
@@ -533,9 +543,9 @@ class HikesCompanion extends UpdateCompanion<Hike> {
   });
   HikesCompanion.insert({
     required String id,
-    required String courseId,
-    required String courseName,
-    required String mountainGroup,
+    this.courseId = const Value.absent(),
+    this.courseName = const Value.absent(),
+    this.mountainGroup = const Value.absent(),
     required DateTime startedAt,
     this.endedAt = const Value.absent(),
     this.status = const Value.absent(),
@@ -545,9 +555,6 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     this.visitId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
-       courseId = Value(courseId),
-       courseName = Value(courseName),
-       mountainGroup = Value(mountainGroup),
        startedAt = Value(startedAt);
   static Insertable<Hike> custom({
     Expression<String>? id,
@@ -581,9 +588,9 @@ class HikesCompanion extends UpdateCompanion<Hike> {
 
   HikesCompanion copyWith({
     Value<String>? id,
-    Value<String>? courseId,
-    Value<String>? courseName,
-    Value<String>? mountainGroup,
+    Value<String?>? courseId,
+    Value<String?>? courseName,
+    Value<String?>? mountainGroup,
     Value<DateTime>? startedAt,
     Value<DateTime?>? endedAt,
     Value<String>? status,
@@ -1136,9 +1143,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
 typedef $$HikesTableCreateCompanionBuilder = HikesCompanion Function({
   required String id,
-  required String courseId,
-  required String courseName,
-  required String mountainGroup,
+  Value<String?> courseId,
+  Value<String?> courseName,
+  Value<String?> mountainGroup,
   required DateTime startedAt,
   Value<DateTime?> endedAt,
   Value<String> status,
@@ -1150,9 +1157,9 @@ typedef $$HikesTableCreateCompanionBuilder = HikesCompanion Function({
 });
 typedef $$HikesTableUpdateCompanionBuilder = HikesCompanion Function({
   Value<String> id,
-  Value<String> courseId,
-  Value<String> courseName,
-  Value<String> mountainGroup,
+  Value<String?> courseId,
+  Value<String?> courseName,
+  Value<String?> mountainGroup,
   Value<DateTime> startedAt,
   Value<DateTime?> endedAt,
   Value<String> status,
@@ -1443,9 +1450,9 @@ class $$HikesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String> courseId = const Value.absent(),
-                Value<String> courseName = const Value.absent(),
-                Value<String> mountainGroup = const Value.absent(),
+                Value<String?> courseId = const Value.absent(),
+                Value<String?> courseName = const Value.absent(),
+                Value<String?> mountainGroup = const Value.absent(),
                 Value<DateTime> startedAt = const Value.absent(),
                 Value<DateTime?> endedAt = const Value.absent(),
                 Value<String> status = const Value.absent(),
@@ -1471,9 +1478,9 @@ class $$HikesTableTableManager
           createCompanionCallback:
               ({
                 required String id,
-                required String courseId,
-                required String courseName,
-                required String mountainGroup,
+                Value<String?> courseId = const Value.absent(),
+                Value<String?> courseName = const Value.absent(),
+                Value<String?> mountainGroup = const Value.absent(),
                 required DateTime startedAt,
                 Value<DateTime?> endedAt = const Value.absent(),
                 Value<String> status = const Value.absent(),

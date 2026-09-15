@@ -19,6 +19,8 @@ class MapState {
     this.selectedCourse,
     this.cameraCommand,
     this.conquest = ConquestStats.empty,
+    this.myLocation,
+    this.locationDenied = false,
   });
 
   final AsyncValue<List<Mountain>> mountains;
@@ -37,6 +39,12 @@ class MapState {
 
   /// 완주 코스 합집합 (색칠 대상 구간 + 헤더 숫자)
   final ConquestStats conquest;
+
+  /// 내 현재 위치 (지도의 기준점). null = 아직 모름
+  final GeoPoint? myLocation;
+
+  /// 위치 권한이 거부됨 → 안내 문구 + 개요 카메라
+  final bool locationDenied;
 
   /// 완주해서 색칠된 구간들
   List<TrailSegment> get completedSegments => conquest.isEmpty
@@ -69,6 +77,8 @@ class MapState {
     Object? selectedCourse = _keep,
     CameraCommand? cameraCommand,
     ConquestStats? conquest,
+    Object? myLocation = _keep,
+    bool? locationDenied,
   }) =>
       MapState(
         mountains: mountains ?? this.mountains,
@@ -81,6 +91,8 @@ class MapState {
         selectedCourse: selectedCourse == _keep ? this.selectedCourse : selectedCourse as CourseView?,
         cameraCommand: cameraCommand ?? this.cameraCommand,
         conquest: conquest ?? this.conquest,
+        myLocation: myLocation == _keep ? this.myLocation : myLocation as GeoPoint?,
+        locationDenied: locationDenied ?? this.locationDenied,
       );
 
   static const _keep = Object();

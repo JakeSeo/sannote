@@ -31,9 +31,11 @@ class Hike {
   });
 
   final String id;
-  final String courseId;
-  final String courseName;
-  final String mountainGroup;
+
+  /// null = 자유 산행 (코스 미확정)
+  final String? courseId;
+  final String? courseName;
+  final String? mountainGroup;
   final DateTime startedAt;
   final DateTime? endedAt;
   final HikeStatus status;
@@ -46,6 +48,10 @@ class Hike {
 
   Duration get duration => (endedAt ?? DateTime.now()).difference(startedAt);
   int get durationMin => duration.inMinutes;
-  bool get isCompleted => status == HikeStatus.completed;
+  bool get hasCourse => courseId != null;
+  String get displayName => courseName ?? '자유 산행';
+
+  /// 완주 = 코스가 확정되고 사용자가 완주로 확인한 기록만
+  bool get isCompleted => status == HikeStatus.completed && hasCourse;
   bool get needsSync => isCompleted && syncedAt == null;
 }

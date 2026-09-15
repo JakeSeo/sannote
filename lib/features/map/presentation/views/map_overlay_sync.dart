@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
+import '../../../../core/geo/geo_point.dart';
 import '../../../mountains/domain/entities/mountain.dart';
 import '../viewmodels/map_state.dart';
 import 'map_overlays.dart';
@@ -23,6 +24,7 @@ class MapOverlaySync {
   bool _courseDrawn = false;
   int _doneCount = -1;
   bool _doneDrawn = false;
+  GeoPoint? _myLocation;
 
   Future<void> _queue = Future.value();
 
@@ -38,6 +40,19 @@ class MapOverlaySync {
     await _syncDone(s);
     await _syncFocus(s);
     await _syncCourse(s);
+    await _syncMyLocation(s);
+  }
+
+  /// SDK 기본 위치 오버레이(파란 점)를 우리 위치 서비스 값으로 움직인다. SDK의 자체 추적/권한 요청은 쓰지 않는다.
+  Future<void> _syncMyLocation(MapState s) async {
+    final p = s.myLocation;
+    if (p == null || p == _myLocation) return;
+    _myLocation = p;
+    await _guard('내 위치', () async {
+      final overlay = _controller.getLocationOverlay();
+      overlay.setPosition(MapOverlays.toNLatLng(p));
+      overlay.setIsVisible(true);
+    });
   }
 
   /// 완주 구간 색칠. 구간 집합이 바뀌었을 때만 다시 그린다.

@@ -10,7 +10,9 @@ import '../../data/repositories/hike_repository_impl.dart';
 import '../../domain/entities/hike.dart';
 import '../../domain/entities/track_point.dart';
 import '../../domain/usecases/compute_course_coverage.dart';
+import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../domain/usecases/finish_hike.dart';
+import '../../domain/usecases/match_course.dart';
 import '../../domain/usecases/start_hike.dart';
 import '../../domain/usecases/sync_visits.dart';
 
@@ -27,6 +29,8 @@ class RecordingState {
 
   /// 진행 중 산행 (null = 기록 안 함)
   final Hike? hike;
+
+  /// 미리 고른 코스 (null = 자유 산행 → 종료 시 자동 판별)
   final CourseSummary? course;
   final List<GeoPoint> track;
   final double distanceKm;
@@ -83,17 +87,17 @@ class RecordingViewModel extends Notifier<RecordingState> {
     }
   }
 
-  /// [시작]
-  Future<void> start(CourseSummary course) async {
+  /// [기록 시작]. 코스는 옵션 — 지도 홈에서는 없이, 코스 화면에서는 그 코스로.
+  Future<void> start({CourseSummary? course}) async {
     if (state.isRecording) return;
-    final hike = await ref.read(startHikeProvider).call(course.course);
+    final hike = await ref.read(startHikeProvider).call(course: course?.course);
     state = RecordingState(hike: hike, course: course);
     _listen();
-    debugPrint('[record] 시작: ${course.course.name} (${ref.read(locationServiceProvider).label})');
+    debugPrint('[record] 시작: ${course?.course.name ?? '자유 산행'} (${ref.read(locationServiceProvider).label})');
   }
 
   /// 미종료 산행 이어가기 (트랙 복원 후 스트림 재구독)
-  Future<void> resume(CourseSummary course) async {
+  Future<void> resume({CourseSummary? course}) async {
     final hike = state.resumable;
     if (hike == null) return;
     final points = await ref.read(hikeRepositoryProvider).getPoints(hike.id);
@@ -121,7 +125,7 @@ class RecordingViewModel extends Notifier<RecordingState> {
         debugPrint('[record] 위치 스트림 종료 (mock 재생 끝)');
         if (kDebugMode && _debugAutoFinish.isNotEmpty && state.isRecording) {
           final status = HikeStatus.values.firstWhere((v) => v.name == _debugAutoFinish, orElse: () => HikeStatus.partial);
-          unawaited(finish(status));
+          unawaited(_autoFinish(status));
         }
       },
     );
@@ -140,26 +144,42 @@ class RecordingViewModel extends Notifier<RecordingState> {
     state = state.copyWith(track: track, distanceKm: FinishHike.trackDistanceKmOf(track), lastFixAt: now, error: null);
   }
 
-  /// [종료] 1단계: 커버율 계산해 제안값 반환. 실제 마감은 [finish]에서 사용자 선택으로.
-  double suggestCoverage() {
-    final course = state.course;
-    if (course == null) return 0;
-    return ref.read(computeCourseCoverageProvider).call(course.polyline, state.track);
+  /// [종료] 1단계: 어느 코스를 걸었는지 판별.
+  /// 미리 고른 코스가 있으면 그 코스의 커버율만, 없으면 모든 코스와 대조해 점수 순으로 돌려준다.
+  Future<List<CourseMatch>> matchCourses() async {
+    final pre = state.course;
+    if (pre != null) {
+      final cov = ref.read(computeCourseCoverageProvider).call(pre.polyline, state.track);
+      return [CourseMatch(course: pre, coverage: cov, trackFit: 1)];
+    }
+    final all = await ref.read(getCourseSummariesProvider).call();
+    final matches = ref.read(matchCourseProvider).call(state.track, all);
+    debugPrint('[record] 코스 판별: ${matches.map((m) => '${m.course.course.name} ${(m.coverage * 100).round()}%').join(', ')}');
+    return matches;
   }
 
-  /// [종료] 2단계: 사용자가 고른 상태로 마감. 완주면 서버 전송 시도.
-  Future<void> finish(HikeStatus status) async {
+  /// [종료] 2단계: 사용자가 확인한 상태·코스로 마감. 완주면 서버 전송 시도.
+  Future<void> finish(HikeStatus status, {CourseMatch? match}) async {
     final hike = state.hike;
     if (hike == null) return;
     _stopStream();
-    final coverage = suggestCoverage();
-    await ref.read(finishHikeProvider).call(hike.id, status: status, coverage: coverage);
-    debugPrint('[record] 종료: ${hike.courseName} → ${status.name}, 커버율 ${(coverage * 100).toStringAsFixed(0)}%, '
+    final course = match?.course ?? state.course;
+    final coverage = match?.coverage;
+    await ref.read(finishHikeProvider).call(hike.id, status: status, coverage: coverage, course: course?.course);
+    debugPrint('[record] 종료: ${course?.course.name ?? '자유 산행'} → ${status.name}, '
+        '커버율 ${coverage == null ? '-' : '${(coverage * 100).round()}%'}, '
         '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km');
     state = const RecordingState();
-    if (status == HikeStatus.completed) {
+    if (status == HikeStatus.completed && course != null) {
       unawaited(ref.read(syncVisitsProvider).call());
     }
+  }
+
+  /// 디버그 자동 종료: 판별 1위 코스로 마감 (없으면 자유 산행 일부)
+  Future<void> _autoFinish(HikeStatus status) async {
+    final matches = await matchCourses();
+    final top = matches.firstOrNull;
+    await finish(top == null ? HikeStatus.partial : status, match: top);
   }
 
   void _stopStream() {
