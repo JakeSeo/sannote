@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../explore/presentation/views/widgets/course_tile.dart';
 import '../../domain/entities/hike.dart';
+import '../../domain/usecases/delete_hike.dart';
 import '../viewmodels/hike_detail_view_model.dart';
 import 'widgets/track_map.dart';
 
@@ -17,7 +18,17 @@ class HikeDetailPage extends ConsumerWidget {
     final detail = ref.watch(hikeDetailProvider(hikeId));
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: Text(detail.value?.hike.courseName ?? '기록')),
+      appBar: AppBar(
+        title: Text(detail.value?.hike.courseName ?? '기록'),
+        actions: [
+          if (detail.value != null)
+            IconButton(
+              tooltip: '기록 삭제',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => _confirmDelete(context, ref, hikeId),
+            ),
+        ],
+      ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const Center(child: Text('기록을 불러오지 못했어요')),
@@ -77,6 +88,24 @@ class HikeDetailPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _confirmDelete(BuildContext context, WidgetRef ref, String id) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('이 기록을 삭제할까요?'),
+      content: const Text('트랙이 기기에서 지워지고 되돌릴 수 없어요. 완주로 칠해진 길도 이 기록이 마지막이면 회색으로 돌아가요.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('취소')),
+        FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('삭제')),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  await ref.read(deleteHikeProvider).call(id);
+  if (!context.mounted) return;
+  Navigator.of(context).pop();
 }
 
 class _Stat extends StatelessWidget {

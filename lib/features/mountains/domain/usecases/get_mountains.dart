@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/test_data.dart';
 import '../../data/repositories/mountain_repository_impl.dart';
 import '../entities/mountain.dart';
 import '../repositories/mountain_repository.dart';
@@ -11,7 +12,7 @@ class GetMountains {
   final MountainRepository _repo;
 
   Future<List<Mountain>> call() async {
-    final list = await _repo.getAll();
+    final list = (await _repo.getAll()).where((m) => TestData.show(m.mountainGroup)).toList();
     list.sort((a, b) => b.segmentCount.compareTo(a.segmentCount));
     return list;
   }

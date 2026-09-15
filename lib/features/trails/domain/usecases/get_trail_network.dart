@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/test_data.dart';
 import '../../data/repositories/trail_repository_impl.dart';
 import '../entities/trail_segment.dart';
 import '../repositories/trail_repository.dart';
@@ -12,7 +13,7 @@ class GetTrailNetwork {
 
   Future<List<TrailSegment>> call() async {
     final all = await _repo.getAllSegments();
-    return all.where((s) => s.polyline.length >= 2).toList(growable: false);
+    return all.where((s) => s.polyline.length >= 2 && TestData.show(s.mountainGroup)).toList(growable: false);
   }
 }
 

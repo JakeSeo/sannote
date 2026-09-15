@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/test_data.dart';
 import '../../../trails/data/repositories/trail_repository_impl.dart';
 import '../../../trails/domain/entities/trail_segment.dart';
 import '../../../trails/domain/repositories/trail_repository.dart';
@@ -23,7 +24,10 @@ class GetCourseSummaries {
   Future<List<CourseSummary>> call() async {
     final (courses, segments) = await (_courses.getAll(), _trails.getAllSegments()).wait;
     final byId = {for (final s in segments) s.segmentId: s};
-    return courses.map((c) => summarize(c, byId)).toList(growable: false);
+    return courses
+        .where((c) => TestData.show(c.mountainGroup))
+        .map((c) => summarize(c, byId))
+        .toList(growable: false);
   }
 
   CourseSummary summarize(Course course, Map<String, TrailSegment> byId) {
