@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../courses/domain/entities/course_stats.dart';
-import '../../../../courses/domain/entities/course_summary.dart';
+import '../../domain/entities/course_stats.dart';
+import '../../domain/entities/course_summary.dart';
 
 /// 코스 목록 한 줄: 이름 · 산 · 거리/예상시간/난이도.
 class CourseTile extends StatelessWidget {

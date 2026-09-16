@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/geo/geo_point.dart';
 import '../../../courses/domain/entities/course.dart';
-import '../../../courses/domain/entities/course_stats.dart';
+import '../../../courses/domain/entities/course_summary.dart';
 import '../../../mountains/domain/entities/mountain.dart';
 import '../../../records/domain/entities/conquest_stats.dart';
 import '../../../spots/domain/entities/spot.dart';
@@ -21,6 +21,8 @@ class MapState {
     this.conquest = ConquestStats.empty,
     this.myLocation,
     this.locationDenied = false,
+    this.liveTrack = const [],
+    this.explicitSelection = false,
   });
 
   final AsyncValue<List<Mountain>> mountains;
@@ -32,7 +34,7 @@ class MapState {
   final String? selectedMountainGroup;
 
   /// 선택된 코스와 파생 정보 (null = 코스 미선택)
-  final CourseView? selectedCourse;
+  final CourseSummary? selectedCourse;
 
   /// View가 1회 소비하는 카메라 이동 명령 (seq가 바뀔 때만 실행)
   final CameraCommand? cameraCommand;
@@ -45,6 +47,15 @@ class MapState {
 
   /// 위치 권한이 거부됨 → 안내 문구 + 개요 카메라
   final bool locationDenied;
+
+  /// 기록 중인 내 트랙 (기록이 끝나면 비움)
+  final List<GeoPoint> liveTrack;
+
+  /// true = 사용자가 직접 고른 선택(마커 탭·검색). 시트 내용과 뒤로가기는 이것만 따른다.
+  /// false = 카메라 이동으로 근처 산이 자동 포커스된 상태(지도 강조만).
+  final bool explicitSelection;
+
+  Mountain? get explicitMountain => explicitSelection ? selectedMountain : null;
 
   /// 완주해서 색칠된 구간들
   List<TrailSegment> get completedSegments => conquest.isEmpty
@@ -79,6 +90,8 @@ class MapState {
     ConquestStats? conquest,
     Object? myLocation = _keep,
     bool? locationDenied,
+    List<GeoPoint>? liveTrack,
+    bool? explicitSelection,
   }) =>
       MapState(
         mountains: mountains ?? this.mountains,
@@ -88,35 +101,16 @@ class MapState {
         selectedMountainGroup: selectedMountainGroup == _keep
             ? this.selectedMountainGroup
             : selectedMountainGroup as String?,
-        selectedCourse: selectedCourse == _keep ? this.selectedCourse : selectedCourse as CourseView?,
+        selectedCourse: selectedCourse == _keep ? this.selectedCourse : selectedCourse as CourseSummary?,
         cameraCommand: cameraCommand ?? this.cameraCommand,
         conquest: conquest ?? this.conquest,
         myLocation: myLocation == _keep ? this.myLocation : myLocation as GeoPoint?,
         locationDenied: locationDenied ?? this.locationDenied,
+        liveTrack: liveTrack ?? this.liveTrack,
+        explicitSelection: explicitSelection ?? this.explicitSelection,
       );
 
   static const _keep = Object();
-}
-
-/// 선택된 코스 + 구간 합산 결과 + 그릴 폴리라인.
-class CourseView {
-  const CourseView({
-    required this.course,
-    required this.segments,
-    required this.stats,
-    required this.polyline,
-    required this.missingSegmentIds,
-  });
-
-  final Course course;
-  final List<TrailSegment> segments;
-  final CourseStats stats;
-  final List<GeoPoint> polyline;
-
-  /// courses.segment_ids 중 segments 테이블에 없는 id (데이터 오류 감지용)
-  final List<String> missingSegmentIds;
-
-  GeoPoint? get start => polyline.isEmpty ? null : polyline.first;
 }
 
 sealed class CameraCommand {

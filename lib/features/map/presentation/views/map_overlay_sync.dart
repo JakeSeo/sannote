@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 import '../../../../core/geo/geo_point.dart';
@@ -25,6 +26,7 @@ class MapOverlaySync {
   int _doneCount = -1;
   bool _doneDrawn = false;
   GeoPoint? _myLocation;
+  int _liveCount = 0;
 
   Future<void> _queue = Future.value();
 
@@ -41,6 +43,29 @@ class MapOverlaySync {
     await _syncFocus(s);
     await _syncCourse(s);
     await _syncMyLocation(s);
+    await _syncLiveTrack(s);
+  }
+
+  static const _liveId = 'live:track';
+
+  /// 기록 중인 트랙 (파랑). 점이 늘어날 때만 갱신, 기록이 끝나면 제거.
+  Future<void> _syncLiveTrack(MapState s) async {
+    final track = s.liveTrack;
+    if (track.length == _liveCount) return;
+    if (track.length < 2) {
+      if (_liveCount >= 2) await _delete(NOverlayType.polylineOverlay, _liveId);
+      _liveCount = track.length;
+      return;
+    }
+    _liveCount = track.length;
+    await _guard('실시간 트랙', () => _controller.addOverlay(NPolylineOverlay(
+          id: _liveId,
+          coords: track.map(MapOverlays.toNLatLng).toList(growable: false),
+          color: const Color(0xFF1E88E5),
+          width: 4,
+          lineCap: NLineCap.round,
+          lineJoin: NLineJoin.round,
+        )..setZIndex(50)));
   }
 
   /// SDK 기본 위치 오버레이(파란 점)를 우리 위치 서비스 값으로 움직인다. SDK의 자체 추적/권한 요청은 쓰지 않는다.

@@ -23,6 +23,7 @@ abstract interface class HikeRepository {
     String? courseId,
     String? courseName,
     String? mountainGroup,
+    int pausedSec = 0,
   });
 
   Future<void> markSynced(String hikeId, {required String visitId, required DateTime syncedAt});

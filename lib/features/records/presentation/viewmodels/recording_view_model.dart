@@ -25,6 +25,9 @@ class RecordingState {
     this.lastFixAt,
     this.error,
     this.resumable,
+    this.isPaused = false,
+    this.pausedTotal = Duration.zero,
+    this.pausedSince,
   });
 
   /// 진행 중 산행 (null = 기록 안 함)
@@ -40,8 +43,18 @@ class RecordingState {
   /// 앱이 죽었다 켜졌을 때 발견된 미종료 산행 (사용자에게 이어가기/종료 물어봄)
   final Hike? resumable;
 
+  /// 일시정지 상태. 위치는 받아도 저장하지 않고, 경과 시간에서 제외한다.
+  final bool isPaused;
+  final Duration pausedTotal;
+  final DateTime? pausedSince;
+
   bool get isRecording => hike != null;
-  Duration get elapsed => hike == null ? Duration.zero : DateTime.now().difference(hike!.startedAt);
+
+  Duration get pausedSoFar =>
+      pausedTotal + (pausedSince == null ? Duration.zero : DateTime.now().difference(pausedSince!));
+
+  /// 경과 시간 (일시정지 제외)
+  Duration get elapsed => hike == null ? Duration.zero : DateTime.now().difference(hike!.startedAt) - pausedSoFar;
 
   RecordingState copyWith({
     Object? hike = _keep,
@@ -51,6 +64,9 @@ class RecordingState {
     Object? lastFixAt = _keep,
     Object? error = _keep,
     Object? resumable = _keep,
+    bool? isPaused,
+    Duration? pausedTotal,
+    Object? pausedSince = _keep,
   }) =>
       RecordingState(
         hike: hike == _keep ? this.hike : hike as Hike?,
@@ -60,6 +76,9 @@ class RecordingState {
         lastFixAt: lastFixAt == _keep ? this.lastFixAt : lastFixAt as DateTime?,
         error: error == _keep ? this.error : error as String?,
         resumable: resumable == _keep ? this.resumable : resumable as Hike?,
+        isPaused: isPaused ?? this.isPaused,
+        pausedTotal: pausedTotal ?? this.pausedTotal,
+        pausedSince: pausedSince == _keep ? this.pausedSince : pausedSince as DateTime?,
       );
   static const _keep = Object();
 }
@@ -136,9 +155,31 @@ class RecordingViewModel extends Notifier<RecordingState> {
     });
   }
 
+  /// 일시정지: 위치 저장 중단, 경과 시간 멈춤 (스트림은 유지해 재시작이 즉시 되도록)
+  void pause() {
+    if (!state.isRecording || state.isPaused) return;
+    state = state.copyWith(isPaused: true, pausedSince: DateTime.now());
+    debugPrint('[record] 일시정지');
+  }
+
+  void resumeRecording() {
+    if (!state.isRecording || !state.isPaused) return;
+    final since = state.pausedSince;
+    state = state.copyWith(
+      isPaused: false,
+      pausedTotal: state.pausedTotal + (since == null ? Duration.zero : DateTime.now().difference(since)),
+      pausedSince: null,
+    );
+    debugPrint('[record] 재시작 (누적 일시정지 ${state.pausedTotal.inSeconds}초)');
+  }
+
   Future<void> _onFix(GeoPoint p) async {
     final hike = state.hike;
     if (hike == null) return;
+    if (state.isPaused) {
+      state = state.copyWith(lastFixAt: DateTime.now(), error: null);
+      return;
+    }
     final now = DateTime.now();
     if (state.track.length < 3 || state.track.length % 20 == 0) {
       debugPrint('[record] 위치 수신 #${state.track.length + 1}: ${p.lat.toStringAsFixed(5)}, ${p.lon.toStringAsFixed(5)}');
@@ -176,7 +217,13 @@ class RecordingViewModel extends Notifier<RecordingState> {
     _stopStream();
     final course = match?.course ?? state.course;
     final coverage = match?.coverage;
-    await ref.read(finishHikeProvider).call(hike.id, status: status, coverage: coverage, course: course?.course);
+    await ref.read(finishHikeProvider).call(
+      hike.id,
+      status: status,
+      coverage: coverage,
+      course: course?.course,
+      pausedSec: state.pausedSoFar.inSeconds,
+    );
     debugPrint('[record] 종료: ${course?.course.name ?? '자유 산행'} → ${status.name}, '
         '커버율 ${coverage == null ? '-' : '${(coverage * 100).round()}%'}, '
         '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km');

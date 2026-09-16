@@ -14,7 +14,7 @@ class FinishHike {
   final HikeRepository _repo;
 
   /// [course]가 있으면 그 코스로 확정(자동 판별 결과 또는 미리 고른 코스). 없으면 자유 산행으로 남는다.
-  Future<void> call(String hikeId, {required HikeStatus status, required double? coverage, Course? course}) async {
+  Future<void> call(String hikeId, {required HikeStatus status, required double? coverage, Course? course, int pausedSec = 0}) async {
     if (status == HikeStatus.discarded) {
       await _repo.delete(hikeId);
       return;
@@ -29,6 +29,7 @@ class FinishHike {
       courseId: course?.courseId,
       courseName: course?.name,
       mountainGroup: course?.mountainGroup,
+      pausedSec: pausedSec,
     );
   }
 

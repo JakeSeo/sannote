@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../explore/presentation/views/widgets/course_tile.dart';
+import '../../../courses/presentation/widgets/course_tile.dart';
 import '../../domain/entities/hike.dart';
 import '../../domain/usecases/sync_visits.dart';
 import '../viewmodels/records_providers.dart';

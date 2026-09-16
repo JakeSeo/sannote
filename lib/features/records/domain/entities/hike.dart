@@ -28,6 +28,7 @@ class Hike {
     required this.coverage,
     required this.syncedAt,
     required this.visitId,
+    this.pausedSec = 0,
   });
 
   final String id;
@@ -46,7 +47,10 @@ class Hike {
   final DateTime? syncedAt;
   final String? visitId;
 
-  Duration get duration => (endedAt ?? DateTime.now()).difference(startedAt);
+  /// 일시정지 누적 초 (소요시간에서 제외)
+  final int pausedSec;
+
+  Duration get duration => (endedAt ?? DateTime.now()).difference(startedAt) - Duration(seconds: pausedSec);
   int get durationMin => duration.inMinutes;
   bool get hasCourse => courseId != null;
   String get displayName => courseName ?? '자유 산행';

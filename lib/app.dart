@@ -5,12 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/dev/debug_auto_hike.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
-import 'features/course_detail/presentation/views/course_detail_page.dart';
-import 'features/mountain_detail/presentation/views/mountain_detail_page.dart';
-import 'features/shell/home_shell.dart';
+import 'features/map/presentation/views/map_home_page.dart';
+import 'features/records/presentation/views/records_page.dart';
 
 /// 디버그 전용 시작 화면 지정 (스크린샷·수동 테스트용).
-/// 예) `--dart-define=SANNOTE_START=explore|records` / `mountain:아차산·용마산` / `course:{course_id}`
+/// 예) `--dart-define=SANNOTE_START=records` / `mountain:아차산·용마산` / `course:{course_id}` / `autohike:...`
 const _debugStart = String.fromEnvironment('SANNOTE_START');
 
 class SannoteApp extends ConsumerWidget {
@@ -33,18 +32,16 @@ class SannoteApp extends ConsumerWidget {
         final i => (_debugStart.substring(0, i), _debugStart.substring(i + 1)),
       };
       switch (kind) {
-        case 'explore':
-          return const HomeShell(initialIndex: 1);
         case 'records':
-          return const HomeShell(initialIndex: 2);
+          return const RecordsPage();
         case 'mountain':
-          return MountainDetailPage(mountainGroup: arg);
+          return MapHomePage(initialMountainGroup: arg);
         case 'course':
-          return CourseDetailPage(courseId: arg);
+          return MapHomePage(initialCourseId: arg);
         case 'autohike':
           return DebugAutoHike(courseId: arg);
       }
     }
-    return const HomeShell();
+    return const MapHomePage();
   }
 }

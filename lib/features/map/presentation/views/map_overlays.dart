@@ -5,7 +5,7 @@ import '../../../../core/geo/geo_point.dart';
 import '../../../mountains/domain/entities/mountain.dart';
 import '../../../spots/domain/entities/spot.dart';
 import '../../../trails/domain/entities/trail_segment.dart';
-import '../viewmodels/map_state.dart';
+import '../../../courses/domain/entities/course_summary.dart';
 
 /// 도메인 데이터 → 네이버 지도 오버레이 변환. 상태 없음.
 ///
@@ -136,7 +136,7 @@ abstract final class MapOverlays {
   static const courseIds = [coursePathId, courseStartId];
 
   /// 선택된 코스: 굵은 색 경로 + 출발 마커. 나머지는 회색 그대로.
-  static Set<NAddableOverlay> courseOverlays(CourseView view) {
+  static Set<NAddableOverlay> courseOverlays(CourseSummary view) {
     if (view.polyline.length < 2) return const {};
     final path = NPathOverlay(
       id: coursePathId,

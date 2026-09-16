@@ -50,11 +50,13 @@ class HikeRepositoryImpl implements HikeRepository {
     String? courseId,
     String? courseName,
     String? mountainGroup,
+    int pausedSec = 0,
   }) =>
       _service.updateHike(
         hikeId,
         db.HikesCompanion(
           endedAt: Value(endedAt),
+          pausedSec: Value(pausedSec),
           status: Value(status.name),
           distanceKm: Value(distanceKm),
           coverage: Value(coverage),
@@ -110,6 +112,7 @@ class HikeRepositoryImpl implements HikeRepository {
           coverage: r.coverage,
           syncedAt: r.syncedAt,
           visitId: r.visitId,
+          pausedSec: r.pausedSec,
         );
 }
 

@@ -105,6 +105,18 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _pausedSecMeta = const VerificationMeta(
+    'pausedSec',
+  );
+  @override
+  late final GeneratedColumn<int> pausedSec = GeneratedColumn<int>(
+    'paused_sec',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _syncedAtMeta = const VerificationMeta(
     'syncedAt',
   );
@@ -138,6 +150,7 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
     status,
     distanceKm,
     coverage,
+    pausedSec,
     syncedAt,
     visitId,
   ];
@@ -211,6 +224,12 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
         coverage.isAcceptableOrUnknown(data['coverage']!, _coverageMeta),
       );
     }
+    if (data.containsKey('paused_sec')) {
+      context.handle(
+        _pausedSecMeta,
+        pausedSec.isAcceptableOrUnknown(data['paused_sec']!, _pausedSecMeta),
+      );
+    }
     if (data.containsKey('synced_at')) {
       context.handle(
         _syncedAtMeta,
@@ -268,6 +287,10 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
         DriftSqlType.double,
         data['${effectivePrefix}coverage'],
       ),
+      pausedSec: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}paused_sec'],
+      )!,
       syncedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}synced_at'],
@@ -302,6 +325,9 @@ class Hike extends DataClass implements Insertable<Hike> {
   /// 종료 시 계산한 코스 커버율 (0~1). 완주 판정 제안에 사용
   final double? coverage;
 
+  /// 일시정지 누적 초. 소요시간 = (종료-시작) - 이 값
+  final int pausedSec;
+
   /// 서버 visits에 올라간 시각. null = 전송 대기
   final DateTime? syncedAt;
   final String? visitId;
@@ -315,6 +341,7 @@ class Hike extends DataClass implements Insertable<Hike> {
     required this.status,
     required this.distanceKm,
     this.coverage,
+    required this.pausedSec,
     this.syncedAt,
     this.visitId,
   });
@@ -340,6 +367,7 @@ class Hike extends DataClass implements Insertable<Hike> {
     if (!nullToAbsent || coverage != null) {
       map['coverage'] = Variable<double>(coverage);
     }
+    map['paused_sec'] = Variable<int>(pausedSec);
     if (!nullToAbsent || syncedAt != null) {
       map['synced_at'] = Variable<DateTime>(syncedAt);
     }
@@ -370,6 +398,7 @@ class Hike extends DataClass implements Insertable<Hike> {
       coverage: coverage == null && nullToAbsent
           ? const Value.absent()
           : Value(coverage),
+      pausedSec: Value(pausedSec),
       syncedAt: syncedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(syncedAt),
@@ -394,6 +423,7 @@ class Hike extends DataClass implements Insertable<Hike> {
       status: serializer.fromJson<String>(json['status']),
       distanceKm: serializer.fromJson<double>(json['distanceKm']),
       coverage: serializer.fromJson<double?>(json['coverage']),
+      pausedSec: serializer.fromJson<int>(json['pausedSec']),
       syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
       visitId: serializer.fromJson<String?>(json['visitId']),
     );
@@ -411,6 +441,7 @@ class Hike extends DataClass implements Insertable<Hike> {
       'status': serializer.toJson<String>(status),
       'distanceKm': serializer.toJson<double>(distanceKm),
       'coverage': serializer.toJson<double?>(coverage),
+      'pausedSec': serializer.toJson<int>(pausedSec),
       'syncedAt': serializer.toJson<DateTime?>(syncedAt),
       'visitId': serializer.toJson<String?>(visitId),
     };
@@ -426,6 +457,7 @@ class Hike extends DataClass implements Insertable<Hike> {
     String? status,
     double? distanceKm,
     Value<double?> coverage = const Value.absent(),
+    int? pausedSec,
     Value<DateTime?> syncedAt = const Value.absent(),
     Value<String?> visitId = const Value.absent(),
   }) => Hike(
@@ -440,6 +472,7 @@ class Hike extends DataClass implements Insertable<Hike> {
     status: status ?? this.status,
     distanceKm: distanceKm ?? this.distanceKm,
     coverage: coverage.present ? coverage.value : this.coverage,
+    pausedSec: pausedSec ?? this.pausedSec,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
     visitId: visitId.present ? visitId.value : this.visitId,
   );
@@ -460,6 +493,7 @@ class Hike extends DataClass implements Insertable<Hike> {
           ? data.distanceKm.value
           : this.distanceKm,
       coverage: data.coverage.present ? data.coverage.value : this.coverage,
+      pausedSec: data.pausedSec.present ? data.pausedSec.value : this.pausedSec,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
       visitId: data.visitId.present ? data.visitId.value : this.visitId,
     );
@@ -477,6 +511,7 @@ class Hike extends DataClass implements Insertable<Hike> {
           ..write('status: $status, ')
           ..write('distanceKm: $distanceKm, ')
           ..write('coverage: $coverage, ')
+          ..write('pausedSec: $pausedSec, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('visitId: $visitId')
           ..write(')'))
@@ -494,6 +529,7 @@ class Hike extends DataClass implements Insertable<Hike> {
     status,
     distanceKm,
     coverage,
+    pausedSec,
     syncedAt,
     visitId,
   );
@@ -510,6 +546,7 @@ class Hike extends DataClass implements Insertable<Hike> {
           other.status == this.status &&
           other.distanceKm == this.distanceKm &&
           other.coverage == this.coverage &&
+          other.pausedSec == this.pausedSec &&
           other.syncedAt == this.syncedAt &&
           other.visitId == this.visitId);
 }
@@ -524,6 +561,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
   final Value<String> status;
   final Value<double> distanceKm;
   final Value<double?> coverage;
+  final Value<int> pausedSec;
   final Value<DateTime?> syncedAt;
   final Value<String?> visitId;
   final Value<int> rowid;
@@ -537,6 +575,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     this.status = const Value.absent(),
     this.distanceKm = const Value.absent(),
     this.coverage = const Value.absent(),
+    this.pausedSec = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.visitId = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -551,6 +590,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     this.status = const Value.absent(),
     this.distanceKm = const Value.absent(),
     this.coverage = const Value.absent(),
+    this.pausedSec = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.visitId = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -566,6 +606,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     Expression<String>? status,
     Expression<double>? distanceKm,
     Expression<double>? coverage,
+    Expression<int>? pausedSec,
     Expression<DateTime>? syncedAt,
     Expression<String>? visitId,
     Expression<int>? rowid,
@@ -580,6 +621,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
       if (status != null) 'status': status,
       if (distanceKm != null) 'distance_km': distanceKm,
       if (coverage != null) 'coverage': coverage,
+      if (pausedSec != null) 'paused_sec': pausedSec,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (visitId != null) 'visit_id': visitId,
       if (rowid != null) 'rowid': rowid,
@@ -596,6 +638,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     Value<String>? status,
     Value<double>? distanceKm,
     Value<double?>? coverage,
+    Value<int>? pausedSec,
     Value<DateTime?>? syncedAt,
     Value<String?>? visitId,
     Value<int>? rowid,
@@ -610,6 +653,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
       status: status ?? this.status,
       distanceKm: distanceKm ?? this.distanceKm,
       coverage: coverage ?? this.coverage,
+      pausedSec: pausedSec ?? this.pausedSec,
       syncedAt: syncedAt ?? this.syncedAt,
       visitId: visitId ?? this.visitId,
       rowid: rowid ?? this.rowid,
@@ -646,6 +690,9 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     if (coverage.present) {
       map['coverage'] = Variable<double>(coverage.value);
     }
+    if (pausedSec.present) {
+      map['paused_sec'] = Variable<int>(pausedSec.value);
+    }
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
@@ -670,6 +717,7 @@ class HikesCompanion extends UpdateCompanion<Hike> {
           ..write('status: $status, ')
           ..write('distanceKm: $distanceKm, ')
           ..write('coverage: $coverage, ')
+          ..write('pausedSec: $pausedSec, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('visitId: $visitId, ')
           ..write('rowid: $rowid')
@@ -1151,6 +1199,7 @@ typedef $$HikesTableCreateCompanionBuilder = HikesCompanion Function({
   Value<String> status,
   Value<double> distanceKm,
   Value<double?> coverage,
+  Value<int> pausedSec,
   Value<DateTime?> syncedAt,
   Value<String?> visitId,
   Value<int> rowid,
@@ -1165,6 +1214,7 @@ typedef $$HikesTableUpdateCompanionBuilder = HikesCompanion Function({
   Value<String> status,
   Value<double> distanceKm,
   Value<double?> coverage,
+  Value<int> pausedSec,
   Value<DateTime?> syncedAt,
   Value<String?> visitId,
   Value<int> rowid,
@@ -1243,6 +1293,11 @@ class $$HikesTableFilterComposer extends Composer<_$AppDatabase, $HikesTable> {
 
   ColumnFilters<double> get coverage => $composableBuilder(
     column: $table.coverage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pausedSec => $composableBuilder(
+    column: $table.pausedSec,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1336,6 +1391,11 @@ class $$HikesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get pausedSec => $composableBuilder(
+    column: $table.pausedSec,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
     column: $table.syncedAt,
     builder: (column) => ColumnOrderings(column),
@@ -1388,6 +1448,9 @@ class $$HikesTableAnnotationComposer
 
   GeneratedColumn<double> get coverage =>
       $composableBuilder(column: $table.coverage, builder: (column) => column);
+
+  GeneratedColumn<int> get pausedSec =>
+      $composableBuilder(column: $table.pausedSec, builder: (column) => column);
 
   GeneratedColumn<DateTime> get syncedAt =>
       $composableBuilder(column: $table.syncedAt, builder: (column) => column);
@@ -1458,6 +1521,7 @@ class $$HikesTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<double> distanceKm = const Value.absent(),
                 Value<double?> coverage = const Value.absent(),
+                Value<int> pausedSec = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
                 Value<String?> visitId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1471,6 +1535,7 @@ class $$HikesTableTableManager
                 status: status,
                 distanceKm: distanceKm,
                 coverage: coverage,
+                pausedSec: pausedSec,
                 syncedAt: syncedAt,
                 visitId: visitId,
                 rowid: rowid,
@@ -1486,6 +1551,7 @@ class $$HikesTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<double> distanceKm = const Value.absent(),
                 Value<double?> coverage = const Value.absent(),
+                Value<int> pausedSec = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
                 Value<String?> visitId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1499,6 +1565,7 @@ class $$HikesTableTableManager
                 status: status,
                 distanceKm: distanceKm,
                 coverage: coverage,
+                pausedSec: pausedSec,
                 syncedAt: syncedAt,
                 visitId: visitId,
                 rowid: rowid,

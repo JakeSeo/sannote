@@ -8,13 +8,13 @@ import '../../../courses/domain/entities/course_summary.dart';
 import '../../../courses/domain/usecases/filter_courses.dart';
 import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../../mountains/domain/usecases/get_mountains.dart';
-import 'explore_state.dart';
+import 'search_state.dart';
 
-class ExploreViewModel extends Notifier<ExploreState> {
+class SearchViewModel extends Notifier<SearchState> {
   @override
-  ExploreState build() {
+  SearchState build() {
     _load();
-    return const ExploreState();
+    return const SearchState();
   }
 
   Future<void> _load() async {
@@ -23,13 +23,13 @@ class ExploreViewModel extends Notifier<ExploreState> {
 
   Future<void> _loadMountains() async {
     final r = await AsyncValue.guard(() => ref.read(getMountainsProvider).call());
-    if (r.hasError) debugPrint('[explore] mountains 실패: ${r.error}');
+    if (r.hasError) debugPrint('[search] mountains 실패: ${r.error}');
     state = state.copyWith(mountains: r);
   }
 
   Future<void> _loadCourses() async {
     final r = await AsyncValue.guard(() => ref.read(getCourseSummariesProvider).call());
-    if (r.hasError) debugPrint('[explore] courses 실패: ${r.error}');
+    if (r.hasError) debugPrint('[search] courses 실패: ${r.error}');
     state = state.copyWith(courses: r);
   }
 
@@ -59,6 +59,8 @@ class ExploreViewModel extends Notifier<ExploreState> {
 
   void setSort(MountainSort sort) => state = state.copyWith(sort: sort);
 
+  void setQuery(String q) => state = state.copyWith(query: q);
+
   void setDuration(DurationFilter d) => state = state.copyWith(filter: state.filter.copyWith(duration: d));
 
   void toggleLevel(DifficultyLevel level) {
@@ -73,10 +75,11 @@ class ExploreViewModel extends Notifier<ExploreState> {
       ref.read(filterCoursesProvider).call(state.courses.value ?? const [], state.filter);
 }
 
-final exploreViewModelProvider = NotifierProvider<ExploreViewModel, ExploreState>(ExploreViewModel.new);
+final searchViewModelProvider = NotifierProvider<SearchViewModel, SearchState>(SearchViewModel.new);
 
-/// 필터 적용된 코스 목록 (View가 watch)
-final filteredCoursesProvider = Provider<List<CourseSummary>>((ref) {
-  final s = ref.watch(exploreViewModelProvider);
-  return ref.watch(filterCoursesProvider).call(s.courses.value ?? const [], s.filter);
+/// 필터 + 검색어 적용된 코스 목록 (View가 watch)
+final searchedCoursesProvider = Provider<List<CourseSummary>>((ref) {
+  final s = ref.watch(searchViewModelProvider);
+  final filtered = ref.watch(filterCoursesProvider).call(s.courses.value ?? const [], s.filter);
+  return s.matchedCourses(filtered);
 });

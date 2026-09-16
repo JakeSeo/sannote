@@ -22,6 +22,9 @@ class Hikes extends Table {
   /// 종료 시 계산한 코스 커버율 (0~1). 완주 판정 제안에 사용
   RealColumn get coverage => real().nullable()();
 
+  /// 일시정지 누적 초. 소요시간 = (종료-시작) - 이 값
+  IntColumn get pausedSec => integer().withDefault(const Constant(0))();
+
   /// 서버 visits에 올라간 시각. null = 전송 대기
   DateTimeColumn get syncedAt => dateTime().nullable()();
   TextColumn get visitId => text().nullable()();
@@ -45,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'sannote'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -57,6 +60,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             // v2: hikes.course_id / course_name / mountain_group nullable (자유 산행)
             await m.alterTable(TableMigration(hikes));
+          }
+          if (from < 3) {
+            // v3: 일시정지 누적 초
+            await m.addColumn(hikes, hikes.pausedSec);
           }
         },
       );

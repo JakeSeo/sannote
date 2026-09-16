@@ -4,15 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/geo/geo_point.dart';
 import '../../../../core/location/location_provider.dart';
 import '../../../courses/domain/entities/course.dart';
-import '../../../courses/domain/usecases/build_course_polyline.dart';
-import '../../../courses/domain/usecases/compute_course_stats.dart';
+import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../../courses/domain/usecases/get_courses.dart';
 import '../../../mountains/domain/entities/mountain.dart';
 import '../../../mountains/domain/usecases/get_mountains.dart';
 import '../../../records/presentation/viewmodels/records_providers.dart';
 import '../../../records/presentation/viewmodels/recording_view_model.dart';
 import '../../../spots/domain/usecases/get_entrances.dart';
-import '../../../trails/domain/entities/trail_segment.dart';
 import '../../../trails/domain/usecases/get_trail_network.dart';
 import 'map_state.dart';
 
@@ -40,9 +38,16 @@ class MapViewModel extends Notifier<MapState> {
       final v = next.value;
       if (v != null) state = state.copyWith(conquest: v);
     }, fireImmediately: true);
-    // 기록 중에는 기록 스트림의 마지막 위치를 내 위치로 쓴다 (GPS를 두 번 켜지 않기 위해)
-    ref.listen(recordingViewModelProvider.select((s) => s.track.lastOrNull), (_, p) {
-      if (p != null) state = state.copyWith(myLocation: p);
+    // 기록 중에는 기록 스트림의 트랙을 지도에 그리고, 마지막 위치를 내 위치로 쓴다 (GPS를 두 번 켜지 않기 위해)
+    ref.listen(recordingViewModelProvider.select((s) => (s.isRecording, s.track)), (prev, r) {
+      final (recording, track) = r;
+      // 기록의 첫 위치가 들어오면 카메라를 그곳으로 (기록 시작 = 내 위치가 기준)
+      final firstFix = recording && track.isNotEmpty && (prev?.$2.isEmpty ?? true);
+      state = state.copyWith(
+        liveTrack: recording ? track : const [],
+        myLocation: track.lastOrNull ?? state.myLocation,
+        cameraCommand: firstFix ? CameraFocus(++_cameraSeq, track.first, 15) : null,
+      );
     });
     return const MapState();
   }
@@ -123,10 +128,12 @@ class MapViewModel extends Notifier<MapState> {
   void onCameraIdle({required GeoPoint target, required double zoom}) {
     final mountains = state.mountains.value;
     if (mountains == null) return;
+    // 사용자가 직접 고른 선택(검색·마커 탭)은 지도를 움직여도 유지한다
+    if (state.explicitSelection) return;
     final next = zoom < autoFocusZoom ? null : _nearestMountain(mountains, target)?.mountainGroup;
     if (next == state.selectedMountainGroup) return;
     debugPrint('[map] 카메라 idle zoom=${zoom.toStringAsFixed(1)} → ${next ?? '없음'}');
-    state = state.copyWith(selectedMountainGroup: next, selectedCourse: null);
+    state = state.copyWith(selectedMountainGroup: next, selectedCourse: null, explicitSelection: false);
   }
 
   /// 산 마커 탭: 포커스 + 카메라 이동
@@ -136,6 +143,7 @@ class MapViewModel extends Notifier<MapState> {
     state = state.copyWith(
       selectedMountainGroup: m.mountainGroup,
       selectedCourse: null,
+      explicitSelection: true,
       cameraCommand: CameraFocus(++_cameraSeq, center, focusZoom),
     );
   }
@@ -146,6 +154,7 @@ class MapViewModel extends Notifier<MapState> {
     state = state.copyWith(
       selectedMountainGroup: null,
       selectedCourse: null,
+      explicitSelection: false,
       cameraCommand: me == null ? CameraOverview(++_cameraSeq) : CameraFocus(++_cameraSeq, me, myLocationZoom),
     );
   }
@@ -155,31 +164,16 @@ class MapViewModel extends Notifier<MapState> {
     final all = state.segments.value;
     if (all == null) return;
     final byId = {for (final s in all) s.segmentId: s};
-    final ordered = <TrailSegmentOrNull>[for (final id in course.segmentIds) byId[id]];
-    final missing = [
-      for (var i = 0; i < ordered.length; i++)
-        if (ordered[i] == null) course.segmentIds[i],
-    ];
-    if (missing.isNotEmpty) {
-      debugPrint('[map] 코스 "${course.name}"에 없는 구간 id: $missing');
-    }
-    final segments = ordered.nonNulls.toList(growable: false);
-    final stats = ref.read(computeCourseStatsProvider).call(segments);
-    final polyline = ref.read(buildCoursePolylineProvider).call(segments);
-    final view = CourseView(
-      course: course,
-      segments: segments,
-      stats: stats,
-      polyline: polyline,
-      missingSegmentIds: missing,
-    );
+    final view = ref.read(getCourseSummariesProvider).summarize(course, byId);
+    final stats = view.stats;
     debugPrint('[map] 코스 선택 "${course.name}": ${stats.segmentCount}구간 '
         '${stats.lengthKm.toStringAsFixed(2)}km 오름 예상 ${stats.estUpMin}분 '
         '난이도 ${stats.score.toStringAsFixed(1)}(${stats.level.label})');
     state = state.copyWith(
       selectedMountainGroup: course.mountainGroup,
       selectedCourse: view,
-      cameraCommand: polyline.isEmpty ? null : CameraFitPoints(++_cameraSeq, polyline),
+      explicitSelection: true,
+      cameraCommand: view.polyline.isEmpty ? null : CameraFitPoints(++_cameraSeq, view.polyline),
     );
   }
 
@@ -217,7 +211,5 @@ class MapViewModel extends Notifier<MapState> {
     }
   }
 }
-
-typedef TrailSegmentOrNull = TrailSegment?;
 
 final mapViewModelProvider = NotifierProvider<MapViewModel, MapState>(MapViewModel.new);
