@@ -26,6 +26,13 @@ class _DebugAutoHikeState extends ConsumerState<DebugAutoHike> {
   }
 
   Future<void> _run() async {
+    if (widget.courseId == 'record') {
+      // 실제 위치 서비스(GPS)로 자유 기록 시작 — 실기기 GPS 파이프라인 진단용
+      await ref.read(recordingViewModelProvider.notifier).start();
+      if (!mounted) return;
+      await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingPage()));
+      return;
+    }
     final free = widget.courseId.startsWith('free:');
     final id = free ? widget.courseId.substring(5) : widget.courseId;
     final summaries = await ref.read(getCourseSummariesProvider).call();

@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 기록 중 CPU 슬립 방지 (geolocator enableWakeLock). 없으면 스트림 활성화가 SecurityException으로 실패해 위치가 한 점도 안 들어옴 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:label="산노트"
         android:name="${applicationName}"

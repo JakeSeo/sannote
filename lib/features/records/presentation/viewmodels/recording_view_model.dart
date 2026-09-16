@@ -118,7 +118,9 @@ class RecordingViewModel extends Notifier<RecordingState> {
       _onFix,
       onError: (Object e) {
         debugPrint('[record] 위치 스트림 오류: $e');
-        state = state.copyWith(error: '위치를 받을 수 없어요. 위치 권한과 GPS를 확인해주세요.');
+        state = state.copyWith(
+          error: '위치를 받을 수 없어 기록이 진행되지 않아요. 위치 권한과 GPS를 확인한 뒤 종료하고 다시 시작해주세요.',
+        );
       },
       onDone: () {
         // 실제 GPS 스트림은 끝나지 않는다. Mock 재생이 끝난 경우에만 온다.
@@ -138,7 +140,16 @@ class RecordingViewModel extends Notifier<RecordingState> {
     final hike = state.hike;
     if (hike == null) return;
     final now = DateTime.now();
-    await ref.read(hikeRepositoryProvider).appendPoint(hike.id, TrackPoint(recordedAt: now, position: p));
+    if (state.track.length < 3 || state.track.length % 20 == 0) {
+      debugPrint('[record] 위치 수신 #${state.track.length + 1}: ${p.lat.toStringAsFixed(5)}, ${p.lon.toStringAsFixed(5)}');
+    }
+    try {
+      await ref.read(hikeRepositoryProvider).appendPoint(hike.id, TrackPoint(recordedAt: now, position: p));
+    } catch (e, st) {
+      debugPrint('[record] 점 저장 실패: $e\n$st');
+      state = state.copyWith(error: '기록 저장에 실패했어요. 저장 공간을 확인해주세요.');
+      return;
+    }
     final track = [...state.track, p];
     // 실시간 거리도 종료 시와 같은 규칙(5m 미만 떨림 무시)으로 계산
     state = state.copyWith(track: track, distanceKm: FinishHike.trackDistanceKmOf(track), lastFixAt: now, error: null);
