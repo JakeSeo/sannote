@@ -138,6 +138,8 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
                   animation: _sheet,
                   builder: (context, _) {
                     final extent = _sheet.isAttached ? _sheet.size : _sheetMin;
+                    // 시트가 절반 이상 올라오면 지도 위 버튼들은 숨긴다 (검색바와 겹침 방지)
+                    if (extent > _sheetMid + 0.05) return const SizedBox.shrink();
                     return Positioned(
                       right: 12,
                       bottom: height * extent + 68,
@@ -173,6 +175,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
                   animation: _sheet,
                   builder: (context, _) {
                     final extent = _sheet.isAttached ? _sheet.size : _sheetMin;
+                    if (extent > _sheetMid + 0.05) return const SizedBox.shrink();
                     return Positioned(
                       left: 0,
                       right: 0,
