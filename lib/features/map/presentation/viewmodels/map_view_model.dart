@@ -27,9 +27,6 @@ class MapViewModel extends Notifier<MapState> {
   /// [내 위치] 버튼·기록 중 줌: 걷는 게 보이는 축척 (약 50m 스케일, 줌 17)
   static const walkingZoom = 17.0;
 
-  /// 이 줌 이상에서 카메라 중심 근처 산군을 자동 선택, 미만이면 선택 해제
-  static const autoFocusZoom = 12.0;
-  static const autoFocusRadiusKm = 5.0;
 
   var _cameraSeq = 0;
 
@@ -40,6 +37,10 @@ class MapViewModel extends Notifier<MapState> {
     ref.listen(conquestStatsProvider, (_, next) {
       final v = next.value;
       if (v != null) state = state.copyWith(conquest: v);
+    }, fireImmediately: true);
+    ref.listen(discoveredSummariesProvider, (_, next) {
+      final v = next.value;
+      if (v != null) state = state.copyWith(discovered: v);
     }, fireImmediately: true);
     // 기록 중에는 기록 스트림의 트랙을 지도에 그리고, 마지막 위치를 내 위치로 쓴다 (GPS를 두 번 켜지 않기 위해)
     ref.listen(recordingViewModelProvider.select((s) => (s.isRecording, s.track)), (prev, r) {
@@ -127,17 +128,8 @@ class MapViewModel extends Notifier<MapState> {
 
   // ---------- 사용자 이벤트 ----------
 
-  /// 카메라가 멈췄을 때. 줌인 상태면 중심 근처 산군을 자동 포커스한다.
-  void onCameraIdle({required GeoPoint target, required double zoom}) {
-    final mountains = state.mountains.value;
-    if (mountains == null) return;
-    // 사용자가 직접 고른 선택(검색·마커 탭)은 지도를 움직여도 유지한다
-    if (state.explicitSelection) return;
-    final next = zoom < autoFocusZoom ? null : _nearestMountain(mountains, target)?.mountainGroup;
-    if (next == state.selectedMountainGroup) return;
-    debugPrint('[map] 카메라 idle zoom=${zoom.toStringAsFixed(1)} → ${next ?? '없음'}');
-    state = state.copyWith(selectedMountainGroup: next, selectedCourse: null, explicitSelection: false);
-  }
+  /// 카메라가 멈췄을 때. (산책노트 피벗 후 자동 포커스 없음 — 밑그림은 항상 같은 회색)
+  void onCameraIdle({required GeoPoint target, required double zoom}) {}
 
   /// 산 마커 탭: 포커스 + 카메라 이동
   void selectMountain(Mountain m) {
@@ -187,21 +179,6 @@ class MapViewModel extends Notifier<MapState> {
   }
 
   // ---------- 내부 ----------
-
-  Mountain? _nearestMountain(List<Mountain> mountains, GeoPoint target) {
-    Mountain? best;
-    var bestKm = autoFocusRadiusKm;
-    for (final m in mountains) {
-      final c = m.center;
-      if (c == null) continue;
-      final d = distanceKm(target, c);
-      if (d < bestKm) {
-        bestKm = d;
-        best = m;
-      }
-    }
-    return best;
-  }
 
   void _log<T>(String what, AsyncValue<T> r, String Function(T) summary) {
     switch (r) {

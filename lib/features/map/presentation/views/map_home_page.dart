@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/dev/developer_menu.dart';
 import '../../../../core/location/location_service.dart';
-import '../../../../core/map/marker_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/map_appearance.dart';
 import '../../../../core/theme/mountain_palette.dart';
+import '../../../records/presentation/views/reveal/course_reveal_overlay.dart';
 import '../../../../core/theme/paper_texture.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../courses/domain/usecases/get_course_summaries.dart';
@@ -16,26 +16,23 @@ import '../../../records/domain/entities/hike.dart';
 import '../../../records/presentation/viewmodels/recording_view_model.dart';
 import '../../../records/presentation/views/finish_flow.dart';
 import '../../../records/presentation/views/records_page.dart';
-import '../../../search/presentation/views/search_page.dart';
 import '../../../settings/presentation/views/settings_page.dart';
 import '../viewmodels/map_state.dart';
 import '../viewmodels/map_view_model.dart';
 import 'map_overlay_sync.dart';
 import 'map_overlays.dart';
 import 'sheet/course_sheet_content.dart';
-import 'sheet/mountain_sheet_content.dart';
 import 'sheet/stats_sheet_content.dart';
 import 'widgets/record_controls.dart';
 
-/// 홈 = 지도 하나. 상단 검색바 + 메뉴, 하단 바텀시트(통계/산/코스), 시트 위 기록 버튼.
-/// 탭 없음. 검색 결과를 고르면 지도가 그 대상으로 이동하고 시트에 설명이 뜬다.
-/// 뒤로가기: 선택이 있으면 검색 화면으로 돌아가고, 없으면 앱 종료.
+/// 홈 = 지도 하나 (산책노트). 상단 손글씨 앱 이름 + 우상단 메뉴(내가 모은 산책로·설정).
+/// 지도: 회색 밑그림 + 내가 칠한 구간(산별 색) + 획득한 코스(탭하면 시트에 설명). 검색 없음.
+/// 하단 시트(통계) 위에 [기록 시작] → 기록 중 [휴식][정지].
 class MapHomePage extends ConsumerStatefulWidget {
-  const MapHomePage({super.key, this.initialCourseId, this.initialMountainGroup});
+  const MapHomePage({super.key, this.initialCourseId});
 
-  /// 디버그/딥링크용 초기 선택
+  /// 디버그/딥링크용 초기 선택 (획득한 코스만 의미 있음)
   final String? initialCourseId;
-  final String? initialMountainGroup;
 
   @override
   ConsumerState<MapHomePage> createState() => _MapHomePageState();
@@ -54,9 +51,6 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
   MapOverlaySync? _sync;
   int _handledCameraSeq = 0;
   final _sheet = DraggableScrollableController();
-
-  /// 마지막 검색어 (뒤로가기로 검색 화면 복원용). null = 검색을 거치지 않은 선택
-  String? _lastQuery;
 
   @override
   void initState() {
@@ -125,18 +119,23 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
       if (mounted) await sync.apply(ref.read(mapViewModelProvider));
     });
     // 사용자가 직접 고른 선택(검색·마커 탭)에만 시트를 올린다. 카메라 이동에 따른 자동 포커스는 지도 강조만.
-    ref.listen(mapViewModelProvider.select((s) => (s.explicitMountain?.mountainGroup, s.selectedCourse?.course.courseId)),
-        (prev, next) {
-      if (prev != next && (next.$1 != null || next.$2 != null)) _snapSheet(_sheetMid);
+    ref.listen(mapViewModelProvider.select((s) => s.selectedCourse?.course.courseId), (prev, next) {
+      if (prev != next && next != null) _snapSheet(_sheetMid);
+    });
+    // 디버그 자동 종료(autohike) 결과에 획득 코스가 있으면 연출 재생
+    ref.listen(recordingViewModelProvider.select((s) => s.isRecording), (prev, next) {
+      if (prev == true && !next) {
+        final r = ref.read(recordingViewModelProvider.notifier).takeAutoResult();
+        if (r != null && r.discovered.isNotEmpty) showCourseReveal(context, r.discovered);
+      }
     });
     ref.listen(recordingViewModelProvider.select((s) => s.resumable), (_, hike) {
       if (hike != null) _askResume(hike);
     });
     _listenErrors();
 
-    final mountain = state.explicitMountain;
     final course = state.selectedCourse;
-    final hasSelection = mountain != null || course != null;
+    final hasSelection = course != null;
     final appearance = ref.watch(mapAppearanceProvider);
 
     return PopScope(
@@ -144,10 +143,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         if (hasSelection) {
-          // 선택 → 검색 화면으로 돌아가기 (지도 앱과 같은 뒤로가기 동선)
-          final q = _lastQuery;
           vm.showOverview();
-          if (q != null) _openSearch(initialQuery: q);
         } else {
           SystemNavigator.pop();
         }
@@ -155,7 +151,6 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
       child: Scaffold(
         body: LayoutBuilder(
           builder: (context, constraints) {
-            final isTablet = constraints.maxWidth >= 600;
             final safe = MediaQuery.paddingOf(context);
             final height = constraints.maxHeight;
             return Stack(
@@ -174,24 +169,15 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
                   onMapReady: _onMapReady,
                   onCameraIdle: _onCameraIdle,
                 ),
-                // 상단: 검색바 + 메뉴
+                // 상단: 앱 이름 + 메뉴
                 Positioned(
                   top: safe.top + 8,
                   left: 12,
                   right: 12,
                   child: Row(
                     children: [
-                      Expanded(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: isTablet ? 480 : double.infinity),
-                          child: _SearchBar(
-                            label: course?.course.name ?? mountain?.mountainGroup ?? _lastQuery,
-                            onTap: () => _openSearch(initialQuery: _lastQuery ?? ''),
-                            onClear: hasSelection ? vm.showOverview : null,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
+                      _AppTitle(subtitle: course?.course.name, onClear: hasSelection ? vm.showOverview : null),
+                      const Spacer(),
                       _HomeMenu(onLongPress: () => DeveloperMenu.show(context)),
                     ],
                   ),
@@ -227,11 +213,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
                   builder: (context, scroll) => _SheetBody(
                     scroll: scroll,
                     onClose: hasSelection ? vm.showOverview : null,
-                    child: course != null
-                        ? CourseSheetContent(summary: course)
-                        : mountain != null
-                            ? MountainSheetContent(mountain: mountain, onCourseTap: vm.selectCourse)
-                            : const StatsSheetContent(),
+                    child: course != null ? CourseSheetContent(summary: course) : const StatsSheetContent(),
                   ),
                 ),
                 // 시트 위 기록 버튼
@@ -252,7 +234,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
                   Positioned(
                     left: 12,
                     right: 12,
-                    top: safe.top + 64,
+                    top: safe.top + 68,
                     child: Card(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -269,26 +251,6 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
     );
   }
 
-  // ---------- 검색 ----------
-
-  Future<void> _openSearch({String initialQuery = ''}) async {
-    final result = await Navigator.of(context).push<SearchSelection>(
-      MaterialPageRoute(builder: (_) => SearchPage(initialQuery: initialQuery)),
-    );
-    if (result == null || !mounted) return;
-    _lastQuery = result.query;
-    final vm = ref.read(mapViewModelProvider.notifier);
-    switch (result) {
-      case CourseSelection(:final courseId):
-        final summaries = await ref.read(getCourseSummariesProvider).call();
-        final s = summaries.where((x) => x.course.courseId == courseId).firstOrNull;
-        if (s != null) vm.selectCourse(s.course);
-      case MountainSelection(:final mountainGroup):
-        final m = ref.read(mapViewModelProvider).mountains.value?.where((x) => x.mountainGroup == mountainGroup).firstOrNull;
-        if (m != null) vm.selectMountain(m);
-    }
-  }
-
   void _snapSheet(double size) {
     if (!_sheet.isAttached) return;
     _sheet.animateTo(size, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
@@ -296,51 +258,23 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
 
   // ---------- 지도 이벤트 ----------
 
-  /// 테마 → 지도 스타일. 스케치북이면 산별 색연필 색 + 손그림 마커.
+  /// 테마 → 지도 스타일. 스케치북이면 산별 색연필 색 + 2겹 선.
   Future<MapStyle> _buildStyle(ThemeVariant v) async {
     if (!v.isSketch) return MapStyle.plain(AppTheme.accentOf(v));
-    final groups = ref.read(mapViewModelProvider).mountains.value?.map((m) => m.mountainGroup).toList() ?? const <String>[];
-    final icons = <String, NOverlayImage>{};
-    for (final g in groups) {
-      icons[g] = await MarkerIcons.mountain(MountainPalette.of(g, ink: true));
-    }
-    return MapStyle(colorOf: (g) => MountainPalette.of(g, ink: v.inkTone), pencil: true, markerIcons: icons);
+    return MapStyle(colorOf: (g) => MountainPalette.of(g, ink: v.inkTone), pencil: true);
   }
 
   Future<void> _onMapReady(NaverMapController controller) async {
     debugPrint('[map] naver map ready');
     _controller = controller;
     final vm = ref.read(mapViewModelProvider.notifier);
-    // 산 데이터가 있어야 마커 아이콘을 만들 수 있으니 잠깐 기다린다 (최대 3초)
-    for (var i = 0; i < 10 && ref.read(mapViewModelProvider).mountains.value == null; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-    }
-    _sync = MapOverlaySync(controller, onMountainTap: vm.selectMountain, style: await _buildStyle(ref.read(themeVariantProvider)));
+    _sync = MapOverlaySync(controller, onCourseTap: (c) => vm.selectCourse(c.course), style: await _buildStyle(ref.read(themeVariantProvider)));
     _sync!.apply(ref.read(mapViewModelProvider));
-    if (widget.initialCourseId != null || widget.initialMountainGroup != null) {
-      _applyInitialSelection();
-    } else {
-      vm.locateMe();
-    }
-  }
-
-  Future<void> _applyInitialSelection() async {
-    final vm = ref.read(mapViewModelProvider.notifier);
     if (widget.initialCourseId != null) {
-      final s = (await ref.read(getCourseSummariesProvider).call())
-          .where((x) => x.course.courseId == widget.initialCourseId)
-          .firstOrNull;
+      final s = (await ref.read(getCourseSummariesProvider).call()).where((x) => x.course.courseId == widget.initialCourseId).firstOrNull;
       if (s != null) vm.selectCourse(s.course);
     } else {
-      // 산 데이터가 로드될 때까지 잠깐 대기
-      for (var i = 0; i < 20; i++) {
-        final m = ref.read(mapViewModelProvider).mountains.value?.where((x) => x.mountainGroup == widget.initialMountainGroup).firstOrNull;
-        if (m != null) {
-          vm.selectMountain(m);
-          break;
-        }
-        await Future<void>.delayed(const Duration(milliseconds: 300));
-      }
+      vm.locateMe();
     }
   }
 
@@ -383,10 +317,10 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('끝내지 않은 산행이 있어요'),
-        content: Text('${hike.displayName} · ${hike.startedAt.month}/${hike.startedAt.day} 시작\n이어서 기록할까요?'),
+        title: const Text('끝내지 않은 산책이 있어요'),
+        content: Text('${hike.startedAt.month}/${hike.startedAt.day} 시작\n이어서 기록할까요?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop('finish'), child: const Text('일부로 저장하고 종료')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop('finish'), child: const Text('저장하고 마치기')),
           FilledButton(onPressed: () => Navigator.of(ctx).pop('resume'), child: const Text('이어가기')),
         ],
       ),
@@ -395,7 +329,10 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
     final summaries = await ref.read(getCourseSummariesProvider).call();
     final course = hike.courseId == null ? null : summaries.where((s) => s.course.courseId == hike.courseId).firstOrNull;
     await vm.resume(course: course);
-    if (choice != 'resume') await vm.finish(HikeStatus.partial);
+    if (choice != 'resume') {
+      final r = await vm.finish();
+      if (mounted && r.discovered.isNotEmpty) await showCourseReveal(context, r.discovered);
+    }
     vm.dismissResumable();
   }
 
@@ -417,11 +354,11 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
   }
 }
 
-class _SearchBar extends ConsumerWidget {
-  const _SearchBar({required this.onTap, this.label, this.onClear});
+/// 좌상단 앱 이름 (손글씨). 코스가 선택돼 있으면 아래에 코스 이름 + 닫기.
+class _AppTitle extends ConsumerWidget {
+  const _AppTitle({this.subtitle, this.onClear});
 
-  final VoidCallback onTap;
-  final String? label;
+  final String? subtitle;
   final VoidCallback? onClear;
 
   @override
@@ -433,33 +370,27 @@ class _SearchBar extends ConsumerWidget {
       color: scheme.surface,
       elevation: 2,
       borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              if (sketch) ...[
-                Text('산노트', style: TextStyle(fontFamily: AppTheme.handwriting, fontSize: 24, fontWeight: FontWeight.w700, color: scheme.onSurface, height: 1)),
-                const SizedBox(width: 10),
-                Container(width: 1, height: 20, color: scheme.outlineVariant),
-                const SizedBox(width: 10),
-              ] else ...[
-                Icon(Icons.search, color: scheme.onSurfaceVariant),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: Text(
-                  label == null || label!.isEmpty ? '산, 코스 검색' : label!,
-                  style: text.bodyLarge?.copyWith(color: label == null || label!.isEmpty ? scheme.onSurfaceVariant : scheme.onSurface),
-                  overflow: TextOverflow.ellipsis,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('산책노트',
+                style: sketch
+                    ? TextStyle(fontFamily: AppTheme.handwriting, fontSize: 26, fontWeight: FontWeight.w700, color: scheme.onSurface, height: 1)
+                    : text.titleMedium),
+            if (subtitle != null) ...[
+              const SizedBox(width: 10),
+              Container(width: 1, height: 20, color: scheme.outlineVariant),
+              const SizedBox(width: 10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 150),
+                child: Text(subtitle!, style: text.bodyMedium, overflow: TextOverflow.ellipsis),
               ),
-              if (onClear != null)
-                GestureDetector(onTap: onClear, child: Icon(Icons.close, size: 20, color: scheme.onSurfaceVariant)),
+              const SizedBox(width: 6),
+              GestureDetector(onTap: onClear, child: Icon(Icons.close, size: 18, color: scheme.onSurfaceVariant)),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -492,7 +423,7 @@ class _HomeMenu extends StatelessWidget {
             }
           },
           itemBuilder: (_) => const [
-            PopupMenuItem(value: 'records', child: ListTile(leading: Icon(Icons.history), title: Text('내 기록'))),
+            PopupMenuItem(value: 'records', child: ListTile(leading: Icon(Icons.collections_bookmark_outlined), title: Text('내가 모은 산책로'))),
             PopupMenuItem(value: 'settings', child: ListTile(leading: Icon(Icons.settings_outlined), title: Text('설정'))),
           ],
         ),

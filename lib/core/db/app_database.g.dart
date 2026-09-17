@@ -1332,16 +1332,622 @@ class TrackPointsCompanion extends UpdateCompanion<TrackPoint> {
   }
 }
 
+class $PaintedSegmentsTable extends PaintedSegments
+    with TableInfo<$PaintedSegmentsTable, PaintedSegment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PaintedSegmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _segmentIdMeta = const VerificationMeta(
+    'segmentId',
+  );
+  @override
+  late final GeneratedColumn<String> segmentId = GeneratedColumn<String>(
+    'segment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mountainGroupMeta = const VerificationMeta(
+    'mountainGroup',
+  );
+  @override
+  late final GeneratedColumn<String> mountainGroup = GeneratedColumn<String>(
+    'mountain_group',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hikeIdMeta = const VerificationMeta('hikeId');
+  @override
+  late final GeneratedColumn<String> hikeId = GeneratedColumn<String>(
+    'hike_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paintedAtMeta = const VerificationMeta(
+    'paintedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> paintedAt = GeneratedColumn<DateTime>(
+    'painted_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    segmentId,
+    mountainGroup,
+    hikeId,
+    paintedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'painted_segments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PaintedSegment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('segment_id')) {
+      context.handle(
+        _segmentIdMeta,
+        segmentId.isAcceptableOrUnknown(data['segment_id']!, _segmentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_segmentIdMeta);
+    }
+    if (data.containsKey('mountain_group')) {
+      context.handle(
+        _mountainGroupMeta,
+        mountainGroup.isAcceptableOrUnknown(
+          data['mountain_group']!,
+          _mountainGroupMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mountainGroupMeta);
+    }
+    if (data.containsKey('hike_id')) {
+      context.handle(
+        _hikeIdMeta,
+        hikeId.isAcceptableOrUnknown(data['hike_id']!, _hikeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hikeIdMeta);
+    }
+    if (data.containsKey('painted_at')) {
+      context.handle(
+        _paintedAtMeta,
+        paintedAt.isAcceptableOrUnknown(data['painted_at']!, _paintedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paintedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {segmentId};
+  @override
+  PaintedSegment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PaintedSegment(
+      segmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}segment_id'],
+      )!,
+      mountainGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mountain_group'],
+      )!,
+      hikeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hike_id'],
+      )!,
+      paintedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}painted_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PaintedSegmentsTable createAlias(String alias) {
+    return $PaintedSegmentsTable(attachedDatabase, alias);
+  }
+}
+
+class PaintedSegment extends DataClass implements Insertable<PaintedSegment> {
+  final String segmentId;
+  final String mountainGroup;
+  final String hikeId;
+  final DateTime paintedAt;
+  const PaintedSegment({
+    required this.segmentId,
+    required this.mountainGroup,
+    required this.hikeId,
+    required this.paintedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['segment_id'] = Variable<String>(segmentId);
+    map['mountain_group'] = Variable<String>(mountainGroup);
+    map['hike_id'] = Variable<String>(hikeId);
+    map['painted_at'] = Variable<DateTime>(paintedAt);
+    return map;
+  }
+
+  PaintedSegmentsCompanion toCompanion(bool nullToAbsent) {
+    return PaintedSegmentsCompanion(
+      segmentId: Value(segmentId),
+      mountainGroup: Value(mountainGroup),
+      hikeId: Value(hikeId),
+      paintedAt: Value(paintedAt),
+    );
+  }
+
+  factory PaintedSegment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PaintedSegment(
+      segmentId: serializer.fromJson<String>(json['segmentId']),
+      mountainGroup: serializer.fromJson<String>(json['mountainGroup']),
+      hikeId: serializer.fromJson<String>(json['hikeId']),
+      paintedAt: serializer.fromJson<DateTime>(json['paintedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'segmentId': serializer.toJson<String>(segmentId),
+      'mountainGroup': serializer.toJson<String>(mountainGroup),
+      'hikeId': serializer.toJson<String>(hikeId),
+      'paintedAt': serializer.toJson<DateTime>(paintedAt),
+    };
+  }
+
+  PaintedSegment copyWith({
+    String? segmentId,
+    String? mountainGroup,
+    String? hikeId,
+    DateTime? paintedAt,
+  }) => PaintedSegment(
+    segmentId: segmentId ?? this.segmentId,
+    mountainGroup: mountainGroup ?? this.mountainGroup,
+    hikeId: hikeId ?? this.hikeId,
+    paintedAt: paintedAt ?? this.paintedAt,
+  );
+  PaintedSegment copyWithCompanion(PaintedSegmentsCompanion data) {
+    return PaintedSegment(
+      segmentId: data.segmentId.present ? data.segmentId.value : this.segmentId,
+      mountainGroup: data.mountainGroup.present
+          ? data.mountainGroup.value
+          : this.mountainGroup,
+      hikeId: data.hikeId.present ? data.hikeId.value : this.hikeId,
+      paintedAt: data.paintedAt.present ? data.paintedAt.value : this.paintedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PaintedSegment(')
+          ..write('segmentId: $segmentId, ')
+          ..write('mountainGroup: $mountainGroup, ')
+          ..write('hikeId: $hikeId, ')
+          ..write('paintedAt: $paintedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(segmentId, mountainGroup, hikeId, paintedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PaintedSegment &&
+          other.segmentId == this.segmentId &&
+          other.mountainGroup == this.mountainGroup &&
+          other.hikeId == this.hikeId &&
+          other.paintedAt == this.paintedAt);
+}
+
+class PaintedSegmentsCompanion extends UpdateCompanion<PaintedSegment> {
+  final Value<String> segmentId;
+  final Value<String> mountainGroup;
+  final Value<String> hikeId;
+  final Value<DateTime> paintedAt;
+  final Value<int> rowid;
+  const PaintedSegmentsCompanion({
+    this.segmentId = const Value.absent(),
+    this.mountainGroup = const Value.absent(),
+    this.hikeId = const Value.absent(),
+    this.paintedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PaintedSegmentsCompanion.insert({
+    required String segmentId,
+    required String mountainGroup,
+    required String hikeId,
+    required DateTime paintedAt,
+    this.rowid = const Value.absent(),
+  }) : segmentId = Value(segmentId),
+       mountainGroup = Value(mountainGroup),
+       hikeId = Value(hikeId),
+       paintedAt = Value(paintedAt);
+  static Insertable<PaintedSegment> custom({
+    Expression<String>? segmentId,
+    Expression<String>? mountainGroup,
+    Expression<String>? hikeId,
+    Expression<DateTime>? paintedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (segmentId != null) 'segment_id': segmentId,
+      if (mountainGroup != null) 'mountain_group': mountainGroup,
+      if (hikeId != null) 'hike_id': hikeId,
+      if (paintedAt != null) 'painted_at': paintedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PaintedSegmentsCompanion copyWith({
+    Value<String>? segmentId,
+    Value<String>? mountainGroup,
+    Value<String>? hikeId,
+    Value<DateTime>? paintedAt,
+    Value<int>? rowid,
+  }) {
+    return PaintedSegmentsCompanion(
+      segmentId: segmentId ?? this.segmentId,
+      mountainGroup: mountainGroup ?? this.mountainGroup,
+      hikeId: hikeId ?? this.hikeId,
+      paintedAt: paintedAt ?? this.paintedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (segmentId.present) {
+      map['segment_id'] = Variable<String>(segmentId.value);
+    }
+    if (mountainGroup.present) {
+      map['mountain_group'] = Variable<String>(mountainGroup.value);
+    }
+    if (hikeId.present) {
+      map['hike_id'] = Variable<String>(hikeId.value);
+    }
+    if (paintedAt.present) {
+      map['painted_at'] = Variable<DateTime>(paintedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PaintedSegmentsCompanion(')
+          ..write('segmentId: $segmentId, ')
+          ..write('mountainGroup: $mountainGroup, ')
+          ..write('hikeId: $hikeId, ')
+          ..write('paintedAt: $paintedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DiscoveredCoursesTable extends DiscoveredCourses
+    with TableInfo<$DiscoveredCoursesTable, DiscoveredCourse> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DiscoveredCoursesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _courseIdMeta = const VerificationMeta(
+    'courseId',
+  );
+  @override
+  late final GeneratedColumn<String> courseId = GeneratedColumn<String>(
+    'course_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hikeIdMeta = const VerificationMeta('hikeId');
+  @override
+  late final GeneratedColumn<String> hikeId = GeneratedColumn<String>(
+    'hike_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _discoveredAtMeta = const VerificationMeta(
+    'discoveredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> discoveredAt = GeneratedColumn<DateTime>(
+    'discovered_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [courseId, hikeId, discoveredAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'discovered_courses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DiscoveredCourse> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('course_id')) {
+      context.handle(
+        _courseIdMeta,
+        courseId.isAcceptableOrUnknown(data['course_id']!, _courseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_courseIdMeta);
+    }
+    if (data.containsKey('hike_id')) {
+      context.handle(
+        _hikeIdMeta,
+        hikeId.isAcceptableOrUnknown(data['hike_id']!, _hikeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hikeIdMeta);
+    }
+    if (data.containsKey('discovered_at')) {
+      context.handle(
+        _discoveredAtMeta,
+        discoveredAt.isAcceptableOrUnknown(
+          data['discovered_at']!,
+          _discoveredAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_discoveredAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {courseId};
+  @override
+  DiscoveredCourse map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DiscoveredCourse(
+      courseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}course_id'],
+      )!,
+      hikeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hike_id'],
+      )!,
+      discoveredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}discovered_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DiscoveredCoursesTable createAlias(String alias) {
+    return $DiscoveredCoursesTable(attachedDatabase, alias);
+  }
+}
+
+class DiscoveredCourse extends DataClass
+    implements Insertable<DiscoveredCourse> {
+  final String courseId;
+  final String hikeId;
+  final DateTime discoveredAt;
+  const DiscoveredCourse({
+    required this.courseId,
+    required this.hikeId,
+    required this.discoveredAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['course_id'] = Variable<String>(courseId);
+    map['hike_id'] = Variable<String>(hikeId);
+    map['discovered_at'] = Variable<DateTime>(discoveredAt);
+    return map;
+  }
+
+  DiscoveredCoursesCompanion toCompanion(bool nullToAbsent) {
+    return DiscoveredCoursesCompanion(
+      courseId: Value(courseId),
+      hikeId: Value(hikeId),
+      discoveredAt: Value(discoveredAt),
+    );
+  }
+
+  factory DiscoveredCourse.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DiscoveredCourse(
+      courseId: serializer.fromJson<String>(json['courseId']),
+      hikeId: serializer.fromJson<String>(json['hikeId']),
+      discoveredAt: serializer.fromJson<DateTime>(json['discoveredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'courseId': serializer.toJson<String>(courseId),
+      'hikeId': serializer.toJson<String>(hikeId),
+      'discoveredAt': serializer.toJson<DateTime>(discoveredAt),
+    };
+  }
+
+  DiscoveredCourse copyWith({
+    String? courseId,
+    String? hikeId,
+    DateTime? discoveredAt,
+  }) => DiscoveredCourse(
+    courseId: courseId ?? this.courseId,
+    hikeId: hikeId ?? this.hikeId,
+    discoveredAt: discoveredAt ?? this.discoveredAt,
+  );
+  DiscoveredCourse copyWithCompanion(DiscoveredCoursesCompanion data) {
+    return DiscoveredCourse(
+      courseId: data.courseId.present ? data.courseId.value : this.courseId,
+      hikeId: data.hikeId.present ? data.hikeId.value : this.hikeId,
+      discoveredAt: data.discoveredAt.present
+          ? data.discoveredAt.value
+          : this.discoveredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiscoveredCourse(')
+          ..write('courseId: $courseId, ')
+          ..write('hikeId: $hikeId, ')
+          ..write('discoveredAt: $discoveredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(courseId, hikeId, discoveredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DiscoveredCourse &&
+          other.courseId == this.courseId &&
+          other.hikeId == this.hikeId &&
+          other.discoveredAt == this.discoveredAt);
+}
+
+class DiscoveredCoursesCompanion extends UpdateCompanion<DiscoveredCourse> {
+  final Value<String> courseId;
+  final Value<String> hikeId;
+  final Value<DateTime> discoveredAt;
+  final Value<int> rowid;
+  const DiscoveredCoursesCompanion({
+    this.courseId = const Value.absent(),
+    this.hikeId = const Value.absent(),
+    this.discoveredAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DiscoveredCoursesCompanion.insert({
+    required String courseId,
+    required String hikeId,
+    required DateTime discoveredAt,
+    this.rowid = const Value.absent(),
+  }) : courseId = Value(courseId),
+       hikeId = Value(hikeId),
+       discoveredAt = Value(discoveredAt);
+  static Insertable<DiscoveredCourse> custom({
+    Expression<String>? courseId,
+    Expression<String>? hikeId,
+    Expression<DateTime>? discoveredAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (courseId != null) 'course_id': courseId,
+      if (hikeId != null) 'hike_id': hikeId,
+      if (discoveredAt != null) 'discovered_at': discoveredAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DiscoveredCoursesCompanion copyWith({
+    Value<String>? courseId,
+    Value<String>? hikeId,
+    Value<DateTime>? discoveredAt,
+    Value<int>? rowid,
+  }) {
+    return DiscoveredCoursesCompanion(
+      courseId: courseId ?? this.courseId,
+      hikeId: hikeId ?? this.hikeId,
+      discoveredAt: discoveredAt ?? this.discoveredAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (courseId.present) {
+      map['course_id'] = Variable<String>(courseId.value);
+    }
+    if (hikeId.present) {
+      map['hike_id'] = Variable<String>(hikeId.value);
+    }
+    if (discoveredAt.present) {
+      map['discovered_at'] = Variable<DateTime>(discoveredAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiscoveredCoursesCompanion(')
+          ..write('courseId: $courseId, ')
+          ..write('hikeId: $hikeId, ')
+          ..write('discoveredAt: $discoveredAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $HikesTable hikes = $HikesTable(this);
   late final $TrackPointsTable trackPoints = $TrackPointsTable(this);
+  late final $PaintedSegmentsTable paintedSegments = $PaintedSegmentsTable(
+    this,
+  );
+  late final $DiscoveredCoursesTable discoveredCourses =
+      $DiscoveredCoursesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [hikes, trackPoints];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    hikes,
+    trackPoints,
+    paintedSegments,
+    discoveredCourses,
+  ];
 }
 
 typedef $$HikesTableCreateCompanionBuilder = HikesCompanion Function({
@@ -2183,6 +2789,390 @@ typedef $$TrackPointsTableProcessedTableManager =
       TrackPoint,
       PrefetchHooks Function({bool hikeId})
     >;
+typedef $$PaintedSegmentsTableCreateCompanionBuilder =
+    PaintedSegmentsCompanion Function({
+      required String segmentId,
+      required String mountainGroup,
+      required String hikeId,
+      required DateTime paintedAt,
+      Value<int> rowid,
+    });
+typedef $$PaintedSegmentsTableUpdateCompanionBuilder =
+    PaintedSegmentsCompanion Function({
+      Value<String> segmentId,
+      Value<String> mountainGroup,
+      Value<String> hikeId,
+      Value<DateTime> paintedAt,
+      Value<int> rowid,
+    });
+
+class $$PaintedSegmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $PaintedSegmentsTable> {
+  $$PaintedSegmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get segmentId => $composableBuilder(
+    column: $table.segmentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mountainGroup => $composableBuilder(
+    column: $table.mountainGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hikeId => $composableBuilder(
+    column: $table.hikeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paintedAt => $composableBuilder(
+    column: $table.paintedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PaintedSegmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PaintedSegmentsTable> {
+  $$PaintedSegmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get segmentId => $composableBuilder(
+    column: $table.segmentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mountainGroup => $composableBuilder(
+    column: $table.mountainGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hikeId => $composableBuilder(
+    column: $table.hikeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paintedAt => $composableBuilder(
+    column: $table.paintedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PaintedSegmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PaintedSegmentsTable> {
+  $$PaintedSegmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get segmentId =>
+      $composableBuilder(column: $table.segmentId, builder: (column) => column);
+
+  GeneratedColumn<String> get mountainGroup => $composableBuilder(
+    column: $table.mountainGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get hikeId =>
+      $composableBuilder(column: $table.hikeId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get paintedAt =>
+      $composableBuilder(column: $table.paintedAt, builder: (column) => column);
+}
+
+class $$PaintedSegmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PaintedSegmentsTable,
+          PaintedSegment,
+          $$PaintedSegmentsTableFilterComposer,
+          $$PaintedSegmentsTableOrderingComposer,
+          $$PaintedSegmentsTableAnnotationComposer,
+          $$PaintedSegmentsTableCreateCompanionBuilder,
+          $$PaintedSegmentsTableUpdateCompanionBuilder,
+          (
+            PaintedSegment,
+            BaseReferences<
+              _$AppDatabase,
+              $PaintedSegmentsTable,
+              PaintedSegment
+            >,
+          ),
+          PaintedSegment,
+          PrefetchHooks Function()
+        > {
+  $$PaintedSegmentsTableTableManager(
+    _$AppDatabase db,
+    $PaintedSegmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PaintedSegmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PaintedSegmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PaintedSegmentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> segmentId = const Value.absent(),
+                Value<String> mountainGroup = const Value.absent(),
+                Value<String> hikeId = const Value.absent(),
+                Value<DateTime> paintedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PaintedSegmentsCompanion(
+                segmentId: segmentId,
+                mountainGroup: mountainGroup,
+                hikeId: hikeId,
+                paintedAt: paintedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String segmentId,
+                required String mountainGroup,
+                required String hikeId,
+                required DateTime paintedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => PaintedSegmentsCompanion.insert(
+                segmentId: segmentId,
+                mountainGroup: mountainGroup,
+                hikeId: hikeId,
+                paintedAt: paintedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PaintedSegmentsTable, PaintedSegment>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $PaintedSegmentsTable,
+                    PaintedSegment
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PaintedSegmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PaintedSegmentsTable,
+      PaintedSegment,
+      $$PaintedSegmentsTableFilterComposer,
+      $$PaintedSegmentsTableOrderingComposer,
+      $$PaintedSegmentsTableAnnotationComposer,
+      $$PaintedSegmentsTableCreateCompanionBuilder,
+      $$PaintedSegmentsTableUpdateCompanionBuilder,
+      (
+        PaintedSegment,
+        BaseReferences<_$AppDatabase, $PaintedSegmentsTable, PaintedSegment>,
+      ),
+      PaintedSegment,
+      PrefetchHooks Function()
+    >;
+typedef $$DiscoveredCoursesTableCreateCompanionBuilder =
+    DiscoveredCoursesCompanion Function({
+      required String courseId,
+      required String hikeId,
+      required DateTime discoveredAt,
+      Value<int> rowid,
+    });
+typedef $$DiscoveredCoursesTableUpdateCompanionBuilder =
+    DiscoveredCoursesCompanion Function({
+      Value<String> courseId,
+      Value<String> hikeId,
+      Value<DateTime> discoveredAt,
+      Value<int> rowid,
+    });
+
+class $$DiscoveredCoursesTableFilterComposer
+    extends Composer<_$AppDatabase, $DiscoveredCoursesTable> {
+  $$DiscoveredCoursesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get courseId => $composableBuilder(
+    column: $table.courseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hikeId => $composableBuilder(
+    column: $table.hikeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get discoveredAt => $composableBuilder(
+    column: $table.discoveredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DiscoveredCoursesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DiscoveredCoursesTable> {
+  $$DiscoveredCoursesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get courseId => $composableBuilder(
+    column: $table.courseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hikeId => $composableBuilder(
+    column: $table.hikeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get discoveredAt => $composableBuilder(
+    column: $table.discoveredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DiscoveredCoursesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DiscoveredCoursesTable> {
+  $$DiscoveredCoursesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get courseId =>
+      $composableBuilder(column: $table.courseId, builder: (column) => column);
+
+  GeneratedColumn<String> get hikeId =>
+      $composableBuilder(column: $table.hikeId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get discoveredAt => $composableBuilder(
+    column: $table.discoveredAt,
+    builder: (column) => column,
+  );
+}
+
+class $$DiscoveredCoursesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DiscoveredCoursesTable,
+          DiscoveredCourse,
+          $$DiscoveredCoursesTableFilterComposer,
+          $$DiscoveredCoursesTableOrderingComposer,
+          $$DiscoveredCoursesTableAnnotationComposer,
+          $$DiscoveredCoursesTableCreateCompanionBuilder,
+          $$DiscoveredCoursesTableUpdateCompanionBuilder,
+          (
+            DiscoveredCourse,
+            BaseReferences<
+              _$AppDatabase,
+              $DiscoveredCoursesTable,
+              DiscoveredCourse
+            >,
+          ),
+          DiscoveredCourse,
+          PrefetchHooks Function()
+        > {
+  $$DiscoveredCoursesTableTableManager(
+    _$AppDatabase db,
+    $DiscoveredCoursesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DiscoveredCoursesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DiscoveredCoursesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DiscoveredCoursesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> courseId = const Value.absent(),
+                Value<String> hikeId = const Value.absent(),
+                Value<DateTime> discoveredAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DiscoveredCoursesCompanion(
+                courseId: courseId,
+                hikeId: hikeId,
+                discoveredAt: discoveredAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String courseId,
+                required String hikeId,
+                required DateTime discoveredAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DiscoveredCoursesCompanion.insert(
+                courseId: courseId,
+                hikeId: hikeId,
+                discoveredAt: discoveredAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$DiscoveredCoursesTable, DiscoveredCourse>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $DiscoveredCoursesTable,
+                    DiscoveredCourse
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DiscoveredCoursesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DiscoveredCoursesTable,
+      DiscoveredCourse,
+      $$DiscoveredCoursesTableFilterComposer,
+      $$DiscoveredCoursesTableOrderingComposer,
+      $$DiscoveredCoursesTableAnnotationComposer,
+      $$DiscoveredCoursesTableCreateCompanionBuilder,
+      $$DiscoveredCoursesTableUpdateCompanionBuilder,
+      (
+        DiscoveredCourse,
+        BaseReferences<
+          _$AppDatabase,
+          $DiscoveredCoursesTable,
+          DiscoveredCourse
+        >,
+      ),
+      DiscoveredCourse,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2191,4 +3181,8 @@ class $AppDatabaseManager {
       $$HikesTableTableManager(_db, _db.hikes);
   $$TrackPointsTableTableManager get trackPoints =>
       $$TrackPointsTableTableManager(_db, _db.trackPoints);
+  $$PaintedSegmentsTableTableManager get paintedSegments =>
+      $$PaintedSegmentsTableTableManager(_db, _db.paintedSegments);
+  $$DiscoveredCoursesTableTableManager get discoveredCourses =>
+      $$DiscoveredCoursesTableTableManager(_db, _db.discoveredCourses);
 }

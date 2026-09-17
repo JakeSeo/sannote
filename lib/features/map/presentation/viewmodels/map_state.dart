@@ -23,6 +23,7 @@ class MapState {
     this.locationDenied = false,
     this.liveTrack = const [],
     this.explicitSelection = false,
+    this.discovered = const [],
   });
 
   final AsyncValue<List<Mountain>> mountains;
@@ -57,10 +58,13 @@ class MapState {
 
   Mountain? get explicitMountain => explicitSelection ? selectedMountain : null;
 
-  /// 완주해서 색칠된 구간들
+  /// 내가 칠한 구간들 (산별 색으로 그림)
   List<TrailSegment> get completedSegments => conquest.isEmpty
       ? const []
       : (segments.value ?? const []).where((s) => conquest.completedSegmentIds.contains(s.segmentId)).toList();
+
+  /// 획득한 코스들 (지도에 표시·탭 가능). 미획득 코스는 지도에 없다
+  final List<CourseSummary> discovered;
 
   bool get isLoading => mountains.isLoading || segments.isLoading || entrances.isLoading || courses.isLoading;
 
@@ -92,6 +96,7 @@ class MapState {
     bool? locationDenied,
     List<GeoPoint>? liveTrack,
     bool? explicitSelection,
+    List<CourseSummary>? discovered,
   }) =>
       MapState(
         mountains: mountains ?? this.mountains,
@@ -108,6 +113,7 @@ class MapState {
         locationDenied: locationDenied ?? this.locationDenied,
         liveTrack: liveTrack ?? this.liveTrack,
         explicitSelection: explicitSelection ?? this.explicitSelection,
+        discovered: discovered ?? this.discovered,
       );
 
   static const _keep = Object();

@@ -1,4 +1,4 @@
-/// 홈 지도 헤더 "구간 47개 · 12.3km · 입구 5곳". 완주 코스들의 segment_ids 합집합 집계 (맵매칭 불필요).
+/// 홈 시트 통계. 내가 칠한 구간 집합 기준 (산책노트 피벗: 구간 단위 색칠). completedHikeCount = 획득 코스 수.
 /// 내 누적 숫자만 — 전체 대비 분모/진행률은 표시하지 않는다.
 class ConquestStats {
   const ConquestStats({

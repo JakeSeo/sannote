@@ -1,54 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/hike.dart';
-import '../../domain/usecases/compute_course_coverage.dart';
-import '../../domain/usecases/match_course.dart';
 import '../viewmodels/recording_view_model.dart';
+import 'reveal/course_reveal_overlay.dart';
 
-/// [정지] → 어느 코스를 걸었는지 자동 판별 1위를 기본으로 보여주고, 사용자가 한 번 확인한다.
+/// [정지] → "기록을 저장할까요?" 한 번 확인 → 닿은 구간 색칠 → 획득한 코스가 있으면 연출.
 Future<void> showFinishFlow(BuildContext context, WidgetRef ref) async {
   final vm = ref.read(recordingViewModelProvider.notifier);
-  final matches = await vm.matchCourses();
-  if (!context.mounted) return;
-  final top = matches.firstOrNull;
-  final pct = top == null ? 0 : (top.coverage * 100).round();
-  final suggestComplete = top != null && top.coverage >= ComputeCourseCoverage.suggestCompleteAt;
-
-  final result = await showDialog<(HikeStatus, CourseMatch?)>(
+  final s = ref.read(recordingViewModelProvider);
+  final km = s.distanceKm.toStringAsFixed(2);
+  final min = s.movingTime.inMinutes;
+  final choice = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(top == null ? '산행을 종료할까요?' : top.course.course.name),
-      content: Text(
-        top == null
-            ? '일치하는 코스를 찾지 못했어요. 자유 산행으로 저장할 수 있어요.'
-            : '이 코스의 약 $pct%를 걸으셨어요.\n'
-                '${suggestComplete ? '완주로 기록하면 이 코스가 지도에 색칠돼요.' : '완주로 기록할지 직접 선택해주세요.'}'
-                '${matches.length > 1 ? '\n\n다른 후보: ${matches.skip(1).take(2).map((m) => '${m.course.course.name} ${(m.coverage * 100).round()}%').join(', ')}' : ''}',
-      ),
+      title: const Text('산책을 마칠까요?'),
+      content: Text(s.track.length < 2
+          ? '아직 기록된 위치가 없어요. 기록을 지울까요?'
+          : '$km km · 이동 약 $min분\n걸은 길이 지도에 칠해져요. 숨어 있던 산책로를 다 걸었다면 코스를 획득해요.'),
       actions: [
-        TextButton(onPressed: () => Navigator.of(ctx).pop((HikeStatus.discarded, null)), child: const Text('기록 삭제')),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop((HikeStatus.partial, top)),
-          child: Text(top == null ? '자유 산행으로 저장' : '일부만 걸었어요'),
-        ),
-        if (top != null)
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop((HikeStatus.completed, top)),
-            child: const Text('완주로 기록'),
-          ),
+        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('기록 삭제')),
+        if (s.track.length >= 2) FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('저장하고 마치기')),
       ],
     ),
   );
-  if (result == null || !context.mounted) return;
-  final (status, match) = result;
-  await vm.finish(status, match: match);
+  if (choice == null || !context.mounted) return;
+  final result = await vm.finish(discard: !choice);
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text(switch (status) {
-      HikeStatus.completed => '완주 기록이 저장됐어요. 지도에서 색칠된 길을 확인해보세요!',
-      HikeStatus.partial => match == null ? '자유 산행으로 저장됐어요.' : '산행 기록이 저장됐어요.',
-      _ => '기록을 삭제했어요.',
-    }),
-  ));
+  if (!choice) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('기록을 지웠어요.')));
+    return;
+  }
+  if (result.discovered.isNotEmpty) {
+    await showCourseReveal(context, result.discovered);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('${result.discovered.first.course.name}${result.discovered.length > 1 ? ' 외 ${result.discovered.length - 1}개' : ''}를 내 산책로에 담았어요.'),
+    ));
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(result.newlyPainted.isEmpty
+          ? '산책을 저장했어요. 이번엔 새로 칠한 길은 없어요.'
+          : '산책을 저장했어요. 새로 칠한 길 ${result.newlyPainted.length}구간!'),
+    ));
+  }
 }

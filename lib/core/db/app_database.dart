@@ -50,12 +50,33 @@ class TrackPoints extends Table {
   RealColumn get altitudeM => real().nullable()();
 }
 
-@DriftDatabase(tables: [Hikes, TrackPoints])
+/// 내가 칠한 구간 (트랙 40m 이내에 닿은 등산로 구간). 지도 색칠과 통계의 기준.
+class PaintedSegments extends Table {
+  TextColumn get segmentId => text()();
+  TextColumn get mountainGroup => text()();
+  TextColumn get hikeId => text()();
+  DateTimeColumn get paintedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {segmentId};
+}
+
+/// 획득(리빌)한 코스. 코스 구간의 90% 이상이 칠해졌을 때 열린다.
+class DiscoveredCourses extends Table {
+  TextColumn get courseId => text()();
+  TextColumn get hikeId => text()();
+  DateTimeColumn get discoveredAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {courseId};
+}
+
+@DriftDatabase(tables: [Hikes, TrackPoints, PaintedSegments, DiscoveredCourses])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'sannote'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -80,6 +101,11 @@ class AppDatabase extends _$AppDatabase {
             // v5: 배터리 시작/종료 %
             await m.addColumn(hikes, hikes.batteryStart);
             await m.addColumn(hikes, hikes.batteryEnd);
+          }
+          if (from < 6) {
+            // v6: 구간 단위 색칠 + 코스 획득 (산책노트 피벗)
+            await m.createTable(paintedSegments);
+            await m.createTable(discoveredCourses);
           }
         },
       );

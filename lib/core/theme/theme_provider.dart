@@ -13,7 +13,7 @@ class ThemeVariantNotifier extends Notifier<ThemeVariant> {
     if (kDebugMode && _debugTheme.isNotEmpty) {
       return ThemeVariant.values.where((v) => v.name == _debugTheme).firstOrNull ?? ThemeVariant.forest;
     }
-    return ThemeVariant.forest;
+    return ThemeVariant.sketchInk; // 산책노트 기본: 스케치북(진). 연/진은 획득 연출 보고 최종 결정
   }
 
   void set(ThemeVariant v) => state = v;

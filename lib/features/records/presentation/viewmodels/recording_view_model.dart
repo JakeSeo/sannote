@@ -14,9 +14,8 @@ import '../../domain/entities/hike.dart';
 import '../../domain/entities/track_point.dart';
 import '../../domain/usecases/compute_course_coverage.dart';
 import '../../domain/usecases/compute_moving_time.dart';
-import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../domain/usecases/finish_hike.dart';
-import '../../domain/usecases/match_course.dart';
+import '../../domain/usecases/paint_track.dart';
 import '../../domain/usecases/start_hike.dart';
 import '../../domain/usecases/sync_visits.dart';
 
@@ -246,54 +245,62 @@ class RecordingViewModel extends Notifier<RecordingState> {
     );
   }
 
-  /// [종료] 1단계: 어느 코스를 걸었는지 판별.
-  /// 미리 고른 코스가 있으면 그 코스의 커버율만, 없으면 모든 코스와 대조해 점수 순으로 돌려준다.
-  Future<List<CourseMatch>> matchCourses() async {
-    final pre = state.course;
-    if (pre != null) {
-      final cov = ref.read(computeCourseCoverageProvider).call(pre.polyline, state.track);
-      return [CourseMatch(course: pre, coverage: cov, trackFit: 1)];
-    }
-    final all = await ref.read(getCourseSummariesProvider).call();
-    final matches = ref.read(matchCourseProvider).call(state.track, all);
-    debugPrint('[record] 코스 판별: ${matches.map((m) => '${m.course.course.name} ${(m.coverage * 100).round()}%').join(', ')}');
-    return matches;
-  }
-
-  /// [종료] 2단계: 사용자가 확인한 상태·코스로 마감. 완주면 서버 전송 시도.
-  Future<void> finish(HikeStatus status, {CourseMatch? match}) async {
+  /// [종료]: 기록을 저장하고 트랙에 닿은 구간을 칠한다. 구간이 다 칠해진 코스가 있으면 획득.
+  /// 반환값은 획득 연출용. [discard]면 기록만 지운다.
+  Future<PaintResult> finish({bool discard = false}) async {
     final hike = state.hike;
-    if (hike == null) return;
+    if (hike == null) return PaintResult.empty;
     _stopStream();
-    final course = match?.course ?? state.course;
-    final coverage = match?.coverage;
+    final track = state.track;
     final batteryAtEnd = await ref.read(batteryProvider).level();
+    if (discard) {
+      await ref.read(finishHikeProvider).call(hike.id, status: HikeStatus.discarded, coverage: null);
+      debugPrint('[record] 삭제: ${track.length}점');
+      state = const RecordingState();
+      _batteryAtStart = null;
+      _profile = TrackingProfile.foreground;
+      return PaintResult.empty;
+    }
+    // 1) 구간 색칠 + 코스 획득
+    final result = await ref.read(paintTrackProvider).call(hikeId: hike.id, track: track);
+    // 2) 기록 마감. 획득한 코스가 있으면 첫 코스를 기록에 연결(completed) → visits 전송 대상
+    final got = result.discovered.firstOrNull;
+    final coverage = got == null ? null : ref.read(computeCourseCoverageProvider).call(got.polyline, track);
     await ref.read(finishHikeProvider).call(
       hike.id,
-      status: status,
+      status: got == null ? HikeStatus.partial : HikeStatus.completed,
       coverage: coverage,
-      course: course?.course,
+      course: got?.course,
       batteryStart: _batteryAtStart,
       batteryEnd: batteryAtEnd,
     );
     final drain = _batteryAtStart != null && batteryAtEnd != null ? '${_batteryAtStart! - batteryAtEnd}%p 소모' : '?';
-    debugPrint('[record] 종료: ${course?.course.name ?? '자유 산행'} → ${status.name}, '
-        '커버율 ${coverage == null ? '-' : '${(coverage * 100).round()}%'}, '
-        '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km, 이동 ${state.movingTime.inSeconds}초 / 총 ${state.elapsed.inSeconds}초, '
+    debugPrint('[record] 종료: ${got?.course.name ?? '산책'} · 새로 칠한 구간 ${result.newlyPainted.length} · 획득 ${result.discovered.length}, '
+        '${track.length}점 ${state.distanceKm.toStringAsFixed(2)}km, 이동 ${state.movingTime.inSeconds}초 / 총 ${state.elapsed.inSeconds}초, '
         '배터리 ${_batteryAtStart ?? '?'}% → ${batteryAtEnd ?? '?'}% ($drain, 프로필 ${_profile.name})');
+    // 디버그 자동 종료면 상태를 비우기 전에 결과를 남겨 홈의 리스너가 연출을 재생할 수 있게 한다
+    if (_autoMode) _lastAutoResult = result;
+    state = const RecordingState();
     _batteryAtStart = null;
     _profile = TrackingProfile.foreground;
-    state = const RecordingState();
-    if (status == HikeStatus.completed && course != null) {
-      unawaited(ref.read(syncVisitsProvider).call());
-    }
+    if (got != null) unawaited(ref.read(syncVisitsProvider).call());
+    return result;
   }
 
-  /// 디버그 자동 종료: 판별 1위 코스로 마감 (없으면 자유 산행 일부)
+  /// 디버그 자동 종료
   Future<void> _autoFinish(HikeStatus status) async {
-    final matches = await matchCourses();
-    final top = matches.firstOrNull;
-    await finish(top == null ? HikeStatus.partial : status, match: top);
+    _autoMode = true;
+    await finish(discard: status == HikeStatus.discarded);
+    _autoMode = false;
+  }
+
+  /// 디버그 자동 종료 결과 (연출 트리거용)
+  bool _autoMode = false;
+  PaintResult? _lastAutoResult;
+  PaintResult? takeAutoResult() {
+    final r = _lastAutoResult;
+    _lastAutoResult = null;
+    return r;
   }
 
   void _stopStream({bool keepTicker = false}) {

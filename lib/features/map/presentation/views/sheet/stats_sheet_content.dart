@@ -35,8 +35,8 @@ class StatsSheetContent extends ConsumerWidget {
         else
           Text(
             stats == null || stats.isEmpty
-                ? '아직 칠한 길이 없어요. 기록을 시작해보세요'
-                : '칠한 길 ${stats.segmentCount}구간 · ${stats.totalKm.toStringAsFixed(1)}km · 완주 ${stats.completedHikeCount}회',
+                ? '아직 칠한 길이 없어요. 회색 길을 걸어 칠해보세요'
+                : '칠한 길 ${stats.segmentCount}구간 · ${stats.totalKm.toStringAsFixed(1)}km · 모은 산책로 ${stats.completedHikeCount}개',
             style: text.titleSmall,
           ),
         const SizedBox(height: 14),
@@ -50,10 +50,10 @@ class StatsSheetContent extends ConsumerWidget {
           childAspectRatio: 1.5,
           children: [
             _Tile('칠한 길', '${(stats?.totalKm ?? 0).toStringAsFixed(1)}km'),
-            _Tile('완주 코스', '${stats?.completedHikeCount ?? 0}회'),
+            _Tile('모은 산책로', '${stats?.completedHikeCount ?? 0}개'),
             _Tile('칠한 구간', '${stats?.segmentCount ?? 0}개'),
             _Tile('다녀온 산', '${stats?.mountainGroups.length ?? 0}곳'),
-            _Tile('산행', '${hikes.length}회'),
+            _Tile('산책', '${hikes.length}회'),
             _Tile('총 시간', totalMin < 60 ? '$totalMin분' : '${totalMin ~/ 60}시간 ${totalMin % 60}분'),
           ],
         ),
@@ -73,11 +73,11 @@ class StatsSheetContent extends ConsumerWidget {
         const SizedBox(height: 16),
         Row(
           children: [
-            Text('최근 산행', style: text.titleSmall),
+            Text('최근 산책', style: text.titleSmall),
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordsPage())),
-              child: const Text('내 기록 전체'),
+              child: const Text('내가 모은 산책로'),
             ),
           ],
         ),
@@ -89,7 +89,7 @@ class StatsSheetContent extends ConsumerWidget {
               onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => HikeDetailPage(hikeId: h.id))),
               leading: Icon(h.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
                   color: h.isCompleted ? scheme.primary : scheme.outline),
-              title: Text(h.displayName),
+              title: Text(h.hasCourse ? '${h.courseName} 획득' : '산책'),
               subtitle: Text(
                 '${h.startedAt.month}/${h.startedAt.day} · ${h.distanceKm.toStringAsFixed(1)}km · ${formatMinutes(h.durationMin)}',
                 style: text.bodySmall,
