@@ -7,6 +7,7 @@ import '../../../../core/dev/developer_menu.dart';
 import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../../records/domain/entities/hike.dart';
 import '../../../records/presentation/viewmodels/recording_view_model.dart';
+import '../../../records/presentation/views/finish_flow.dart';
 import '../../../records/presentation/views/records_page.dart';
 import '../../../search/presentation/views/search_page.dart';
 import '../../../settings/presentation/views/settings_page.dart';
@@ -33,7 +34,7 @@ class MapHomePage extends ConsumerStatefulWidget {
   ConsumerState<MapHomePage> createState() => _MapHomePageState();
 }
 
-class _MapHomePageState extends ConsumerState<MapHomePage> {
+class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingObserver {
   static final _overviewCamera = NCameraPosition(
     target: MapOverlays.toNLatLng(MapViewModel.overviewCenter),
     zoom: MapViewModel.overviewZoom,
@@ -51,9 +52,43 @@ class _MapHomePageState extends ConsumerState<MapHomePage> {
   String? _lastQuery;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _sheet.dispose();
     super.dispose();
+  }
+
+  bool _askingFinish = false;
+
+  /// 앱으로 돌아왔을 때 10분 넘게 움직임이 없었으면 종료를 제안한다 (자동 종료는 하지 않음)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState s) {
+    if (s != AppLifecycleState.resumed || _askingFinish) return;
+    if (!ref.read(recordingViewModelProvider.notifier).shouldAskFinish()) return;
+    _askingFinish = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final idle = ref.read(recordingViewModelProvider).idleFor.inMinutes;
+      final yes = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('도착하셨나요?'),
+          content: Text('$idle분 동안 움직임이 없어요. 멈춘 시간은 이동 시간에 들어가지 않지만, 도착했다면 산행을 종료할까요?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('계속 기록')),
+            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('종료하기')),
+          ],
+        ),
+      );
+      _askingFinish = false;
+      if (yes == true && mounted) await showFinishFlow(context, ref);
+    });
   }
 
   @override

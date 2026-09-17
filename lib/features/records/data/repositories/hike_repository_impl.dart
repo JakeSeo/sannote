@@ -51,12 +51,14 @@ class HikeRepositoryImpl implements HikeRepository {
     String? courseName,
     String? mountainGroup,
     int pausedSec = 0,
+    int movingSec = 0,
   }) =>
       _service.updateHike(
         hikeId,
         db.HikesCompanion(
           endedAt: Value(endedAt),
           pausedSec: Value(pausedSec),
+          movingSec: Value(movingSec),
           status: Value(status.name),
           distanceKm: Value(distanceKm),
           coverage: Value(coverage),
@@ -69,6 +71,10 @@ class HikeRepositoryImpl implements HikeRepository {
   @override
   Future<void> markSynced(String hikeId, {required String visitId, required DateTime syncedAt}) =>
       _service.updateHike(hikeId, db.HikesCompanion(visitId: Value(visitId), syncedAt: Value(syncedAt)));
+
+  @override
+  Future<void> updateMovingSec(String hikeId, int movingSec) =>
+      _service.updateHike(hikeId, db.HikesCompanion(movingSec: Value(movingSec)));
 
   @override
   Future<void> delete(String hikeId) => _service.deleteHike(hikeId);
@@ -113,6 +119,7 @@ class HikeRepositoryImpl implements HikeRepository {
           syncedAt: r.syncedAt,
           visitId: r.visitId,
           pausedSec: r.pausedSec,
+          movingSec: r.movingSec,
         );
 }
 

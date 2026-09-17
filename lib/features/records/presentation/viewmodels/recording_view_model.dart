@@ -10,6 +10,7 @@ import '../../data/repositories/hike_repository_impl.dart';
 import '../../domain/entities/hike.dart';
 import '../../domain/entities/track_point.dart';
 import '../../domain/usecases/compute_course_coverage.dart';
+import '../../domain/usecases/compute_moving_time.dart';
 import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../domain/usecases/finish_hike.dart';
 import '../../domain/usecases/match_course.dart';
@@ -28,6 +29,9 @@ class RecordingState {
     this.isPaused = false,
     this.pausedTotal = Duration.zero,
     this.pausedSince,
+    this.lastMovedAt,
+    this.movingTime = Duration.zero,
+    this.lastFix,
   });
 
   /// 진행 중 산행 (null = 기록 안 함)
@@ -48,6 +52,16 @@ class RecordingState {
   final Duration pausedTotal;
   final DateTime? pausedSince;
 
+  /// 마지막으로 이동(5m 이상)이 감지된 시각. 도착 후 종료를 잊었는지 판단용
+  final DateTime? lastMovedAt;
+
+  /// 실시간 이동 시간 (ComputeMovingTime과 같은 규칙으로 누적)
+  final Duration movingTime;
+  final TrackPoint? lastFix;
+
+  /// 움직임이 없는 시간
+  Duration get idleFor => lastMovedAt == null ? Duration.zero : DateTime.now().difference(lastMovedAt!);
+
   bool get isRecording => hike != null;
 
   Duration get pausedSoFar =>
@@ -67,6 +81,9 @@ class RecordingState {
     bool? isPaused,
     Duration? pausedTotal,
     Object? pausedSince = _keep,
+    Object? lastMovedAt = _keep,
+    Duration? movingTime,
+    Object? lastFix = _keep,
   }) =>
       RecordingState(
         hike: hike == _keep ? this.hike : hike as Hike?,
@@ -79,6 +96,9 @@ class RecordingState {
         isPaused: isPaused ?? this.isPaused,
         pausedTotal: pausedTotal ?? this.pausedTotal,
         pausedSince: pausedSince == _keep ? this.pausedSince : pausedSince as DateTime?,
+        lastMovedAt: lastMovedAt == _keep ? this.lastMovedAt : lastMovedAt as DateTime?,
+        movingTime: movingTime ?? this.movingTime,
+        lastFix: lastFix == _keep ? this.lastFix : lastFix as TrackPoint?,
       );
   static const _keep = Object();
 }
@@ -110,7 +130,7 @@ class RecordingViewModel extends Notifier<RecordingState> {
   Future<void> start({CourseSummary? course}) async {
     if (state.isRecording) return;
     final hike = await ref.read(startHikeProvider).call(course: course?.course);
-    state = RecordingState(hike: hike, course: course);
+    state = RecordingState(hike: hike, course: course, lastMovedAt: DateTime.now());
     _listen();
     debugPrint('[record] 시작: ${course?.course.name ?? '자유 산행'} (${ref.read(locationServiceProvider).label})');
   }
@@ -155,7 +175,7 @@ class RecordingViewModel extends Notifier<RecordingState> {
     });
   }
 
-  /// 일시정지: 위치 저장 중단, 경과 시간 멈춤 (스트림은 유지해 재시작이 즉시 되도록)
+  /// 수동 일시정지: 버스 탑승처럼 의도적으로 빼고 싶을 때. 위치 저장 중단, 시간 제외 (스트림은 유지)
   void pause() {
     if (!state.isRecording || state.isPaused) return;
     state = state.copyWith(isPaused: true, pausedSince: DateTime.now());
@@ -165,22 +185,28 @@ class RecordingViewModel extends Notifier<RecordingState> {
   void resumeRecording() {
     if (!state.isRecording || !state.isPaused) return;
     final since = state.pausedSince;
+    final now = DateTime.now();
     state = state.copyWith(
       isPaused: false,
-      pausedTotal: state.pausedTotal + (since == null ? Duration.zero : DateTime.now().difference(since)),
+      pausedTotal: state.pausedTotal + (since == null ? Duration.zero : now.difference(since)),
       pausedSince: null,
+      lastFix: null, // 재시작 뒤 첫 점부터 다시 이동 시간을 잇는다
     );
     debugPrint('[record] 재시작 (누적 일시정지 ${state.pausedTotal.inSeconds}초)');
   }
 
+  /// 움직임이 [threshold] 이상 없으면 true → UI가 "도착하셨나요?" 확인을 띄운다 (자동 종료는 하지 않음)
+  bool shouldAskFinish({Duration threshold = const Duration(minutes: 10)}) =>
+      state.isRecording && !state.isPaused && state.track.isNotEmpty && state.idleFor >= threshold;
+
   Future<void> _onFix(GeoPoint p) async {
     final hike = state.hike;
     if (hike == null) return;
+    final now = DateTime.now();
     if (state.isPaused) {
-      state = state.copyWith(lastFixAt: DateTime.now(), error: null);
+      state = state.copyWith(lastFixAt: now, error: null);
       return;
     }
-    final now = DateTime.now();
     if (state.track.length < 3 || state.track.length % 20 == 0) {
       debugPrint('[record] 위치 수신 #${state.track.length + 1}: ${p.lat.toStringAsFixed(5)}, ${p.lon.toStringAsFixed(5)}');
     }
@@ -192,8 +218,19 @@ class RecordingViewModel extends Notifier<RecordingState> {
       return;
     }
     final track = [...state.track, p];
-    // 실시간 거리도 종료 시와 같은 규칙(5m 미만 떨림 무시)으로 계산
-    state = state.copyWith(track: track, distanceKm: FinishHike.trackDistanceKmOf(track), lastFixAt: now, error: null);
+    final fix = TrackPoint(recordedAt: now, position: p);
+    // 이동 시간: 이전 점과의 간격 중 실제로 움직인 구간만 누적 (종료 시 ComputeMovingTime과 같은 규칙)
+    final prev = state.lastFix;
+    final step = prev == null ? Duration.zero : ComputeMovingTime.step(prev.recordedAt, prev.position, now, p);
+    state = state.copyWith(
+      track: track,
+      distanceKm: FinishHike.trackDistanceKmOf(track), // 실시간 거리도 종료 시와 같은 규칙(5m 미만 떨림 무시)
+      lastFixAt: now,
+      lastFix: fix,
+      movingTime: state.movingTime + step,
+      lastMovedAt: step > Duration.zero || prev == null ? now : state.lastMovedAt,
+      error: null,
+    );
   }
 
   /// [종료] 1단계: 어느 코스를 걸었는지 판별.
@@ -226,7 +263,7 @@ class RecordingViewModel extends Notifier<RecordingState> {
     );
     debugPrint('[record] 종료: ${course?.course.name ?? '자유 산행'} → ${status.name}, '
         '커버율 ${coverage == null ? '-' : '${(coverage * 100).round()}%'}, '
-        '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km');
+        '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km, 이동 ${state.movingTime.inSeconds}초 / 총 ${state.elapsed.inSeconds}초');
     state = const RecordingState();
     if (status == HikeStatus.completed && course != null) {
       unawaited(ref.read(syncVisitsProvider).call());

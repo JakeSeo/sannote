@@ -24,9 +24,13 @@ abstract interface class HikeRepository {
     String? courseName,
     String? mountainGroup,
     int pausedSec = 0,
+    int movingSec = 0,
   });
 
   Future<void> markSynced(String hikeId, {required String visitId, required DateTime syncedAt});
+
+  /// 옛 기록의 이동 시간 채우기 (스키마 v4 이전 기록)
+  Future<void> updateMovingSec(String hikeId, int movingSec);
 
   Future<void> delete(String hikeId);
 

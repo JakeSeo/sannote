@@ -6,12 +6,14 @@ import '../../data/repositories/hike_repository_impl.dart';
 import '../entities/hike.dart';
 import '../entities/track_point.dart';
 import '../repositories/hike_repository.dart';
+import 'compute_moving_time.dart';
 
 /// 종료: 거리 계산 + 사용자가 고른 상태(완주/일부/삭제)로 마감.
 class FinishHike {
-  const FinishHike(this._repo);
+  const FinishHike(this._repo, this._movingTime);
 
   final HikeRepository _repo;
+  final ComputeMovingTime _movingTime;
 
   /// [course]가 있으면 그 코스로 확정(자동 판별 결과 또는 미리 고른 코스). 없으면 자유 산행으로 남는다.
   Future<void> call(String hikeId, {required HikeStatus status, required double? coverage, Course? course, int pausedSec = 0}) async {
@@ -30,6 +32,7 @@ class FinishHike {
       courseName: course?.name,
       mountainGroup: course?.mountainGroup,
       pausedSec: pausedSec,
+      movingSec: _movingTime(points).inSeconds,
     );
   }
 
@@ -56,4 +59,5 @@ class FinishHike {
   }
 }
 
-final finishHikeProvider = Provider<FinishHike>((ref) => FinishHike(ref.watch(hikeRepositoryProvider)));
+final finishHikeProvider = Provider<FinishHike>(
+    (ref) => FinishHike(ref.watch(hikeRepositoryProvider), ref.watch(computeMovingTimeProvider)));

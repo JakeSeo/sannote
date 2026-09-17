@@ -53,7 +53,7 @@ class HikeDetailPage extends ConsumerWidget {
                         children: [
                           _Stat('날짜', '${h.startedAt.year}.${h.startedAt.month}.${h.startedAt.day}'),
                           _Stat('거리', '${h.distanceKm.toStringAsFixed(2)}km'),
-                          _Stat('시간', formatMinutes(h.durationMin)),
+                          _Stat('이동 시간', formatMinutes(h.durationMin)),
                           _Stat(
                             '상태',
                             switch (h.status) {
@@ -71,6 +71,7 @@ class HikeDetailPage extends ConsumerWidget {
                   Text(
                     [
                       'GPS 점 ${d.track.length}개',
+                      '총 경과 ${formatMinutes(h.totalDuration.inMinutes)}',
                       if (!h.hasCourse) '자유 산행 (코스 미확정)',
                       if (h.coverage != null) '코스 커버율 약 ${(h.coverage! * 100).round()}%',
                       if (h.isCompleted) (h.syncedAt == null ? '서버 전송 대기' : '서버 전송 완료'),

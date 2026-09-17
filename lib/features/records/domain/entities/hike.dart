@@ -29,6 +29,7 @@ class Hike {
     required this.syncedAt,
     required this.visitId,
     this.pausedSec = 0,
+    this.movingSec = 0,
   });
 
   final String id;
@@ -47,10 +48,17 @@ class Hike {
   final DateTime? syncedAt;
   final String? visitId;
 
-  /// 일시정지 누적 초 (소요시간에서 제외)
+  /// 수동 일시정지 누적 초
   final int pausedSec;
 
-  Duration get duration => (endedAt ?? DateTime.now()).difference(startedAt) - Duration(seconds: pausedSec);
+  /// 이동 시간(초). 0이면(옛 기록·점 없음) 총 경과에서 일시정지를 뺀 값을 대신 쓴다
+  final int movingSec;
+
+  /// 총 경과 (시작~종료, 일시정지 제외)
+  Duration get totalDuration => (endedAt ?? DateTime.now()).difference(startedAt) - Duration(seconds: pausedSec);
+
+  /// 표시용 소요시간 = 이동 시간. 멈춰 있던 시간(도착 후 종료를 잊은 경우 등)은 빠진다
+  Duration get duration => movingSec > 0 ? Duration(seconds: movingSec) : totalDuration;
   int get durationMin => duration.inMinutes;
   bool get hasCourse => courseId != null;
   String get displayName => courseName ?? '자유 산행';

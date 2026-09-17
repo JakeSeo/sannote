@@ -103,8 +103,11 @@ class _LiveHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final e = recording.elapsed;
-    final elapsed = '${e.inHours}:${(e.inMinutes % 60).toString().padLeft(2, '0')}:${(e.inSeconds % 60).toString().padLeft(2, '0')}';
+    String fmt(Duration e) =>
+        '${e.inHours}:${(e.inMinutes % 60).toString().padLeft(2, '0')}:${(e.inSeconds % 60).toString().padLeft(2, '0')}';
+    final elapsed = fmt(recording.movingTime);
+    final total = fmt(recording.elapsed);
+    final idleMin = recording.idleFor.inMinutes;
     final since = recording.lastFixAt == null ? null : DateTime.now().difference(recording.lastFixAt!).inSeconds;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +118,7 @@ class _LiveHeader extends StatelessWidget {
                 size: 14, color: recording.isPaused ? Theme.of(context).colorScheme.outline : const Color(0xFFE53935)),
             const SizedBox(width: 6),
             Text(
-              '${recording.isPaused ? '일시정지' : '기록 중'} $elapsed · ${recording.distanceKm.toStringAsFixed(2)}km · '
+              '${recording.isPaused ? '일시정지' : '이동'} $elapsed · ${recording.distanceKm.toStringAsFixed(2)}km · '
               'GPS ${recording.track.isEmpty ? '대기 중' : '${recording.track.length}점${since == null ? '' : ' ($since초 전)'}'}',
               style: text.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
             ),
@@ -125,6 +128,13 @@ class _LiveHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(recording.error!, style: text.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error)),
         ],
+        const SizedBox(height: 2),
+        Text(
+          !recording.isPaused && recording.track.isNotEmpty && idleMin >= 3
+              ? '총 경과 $total · $idleMin분 동안 움직임이 없어요. 멈춘 시간은 이동 시간에 들어가지 않아요. 도착했다면 [정지]를 눌러주세요.'
+              : '총 경과 $total · 멈춰 있는 시간은 이동 시간에서 자동으로 빠져요',
+          style: text.bodySmall,
+        ),
         if (recording.course != null) ...[
           const SizedBox(height: 4),
           Text('코스: ${recording.course!.course.name}', style: text.bodySmall),
