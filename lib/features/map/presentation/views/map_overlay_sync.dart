@@ -10,10 +10,19 @@ import 'map_overlays.dart';
 /// [MapState] → NaverMapController 오버레이 반영. 이미 그린 것과 비교해 바뀐 것만 갱신한다.
 /// (View 계층의 렌더 보조 객체. 비즈니스 로직 없음)
 class MapOverlaySync {
-  MapOverlaySync(this._controller, {required this.onMountainTap});
+  MapOverlaySync(this._controller, {required this.onMountainTap, required MapStyle style}) : _style = style; // ignore: prefer_initializing_formals
 
   final NaverMapController _controller;
   final void Function(Mountain) onMountainTap;
+  MapStyle _style;
+
+  /// 테마가 바뀌면 색이 달린 오버레이(완주·코스·마커)를 다시 그린다
+  void setStyle(MapStyle style) {
+    _style = style;
+    _doneCount = -1;
+    _courseId = '__redraw__';
+    _markersDrawn = false;
+  }
 
   bool _networkDrawn = false;
   bool _markersDrawn = false;
@@ -24,7 +33,8 @@ class MapOverlaySync {
   String? _courseId;
   bool _courseDrawn = false;
   int _doneCount = -1;
-  bool _doneDrawn = false;
+  final Set<String> _doneIds = {};
+  final Set<String> _markerIds = {};
   GeoPoint? _myLocation;
   int _liveCount = 0;
 
@@ -86,24 +96,30 @@ class MapOverlaySync {
     final completed = s.completedSegments;
     if (completed.length == _doneCount) return;
     _doneCount = completed.length;
-    if (_doneDrawn) {
-      await _delete(NOverlayType.multipartPathOverlay, MapOverlays.doneId);
-      _doneDrawn = false;
+    for (final id in _doneIds) {
+      await _delete(NOverlayType.multipartPathOverlay, id);
     }
-    final overlay = MapOverlays.doneOverlay(completed);
-    if (overlay == null) return;
-    _doneDrawn = true;
-    await _guard('완주 색칠', () => _controller.addOverlay(overlay));
-    debugPrint('[map] 완주 구간 ${completed.length}개 색칠');
+    _doneIds.clear();
+    if (completed.isEmpty) return;
+    final overlays = MapOverlays.doneOverlays(completed, _style);
+    _doneIds.addAll(overlays.map((o) => o.info.id));
+    await _guard('완주 색칠', () => _controller.addOverlayAll(overlays));
+    debugPrint('[map] 완주 구간 ${completed.length}개 색칠 (${_doneIds.length} 오버레이)');
   }
 
   Future<void> _syncMarkers(MapState s) async {
     final mountains = s.mountains.value;
     if (_markersDrawn || mountains == null) return;
     _markersDrawn = true;
+    for (final id in _markerIds) {
+      await _delete(NOverlayType.marker, id);
+    }
+    _markerIds.clear();
     final markers = <NAddableOverlay>{
-      for (final m in mountains) ?MapOverlays.mountainMarker(m, onTap: onMountainTap),
+      for (final m in mountains)
+        ?MapOverlays.mountainMarker(m, onTap: onMountainTap, icon: _style.markerIcons[m.mountainGroup]),
     };
+    _markerIds.addAll(markers.map((o) => o.info.id));
     await _guard('산 마커', () => _controller.addOverlayAll(markers));
   }
 
@@ -156,7 +172,7 @@ class MapOverlaySync {
       _courseDrawn = false;
     }
     if (view == null) return;
-    final overlays = MapOverlays.courseOverlays(view);
+    final overlays = MapOverlays.courseOverlays(view, _style);
     if (overlays.isEmpty) return;
     _courseDrawn = true;
     await _guard('코스 강조', () => _controller.addOverlayAll(overlays));

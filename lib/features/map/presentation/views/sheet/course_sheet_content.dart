@@ -6,6 +6,8 @@ import '../../../../courses/domain/entities/course_summary.dart';
 import '../../../../courses/presentation/widgets/course_tile.dart';
 import '../../../../records/domain/entities/hike.dart';
 import '../../../../records/presentation/viewmodels/records_providers.dart';
+import '../../../../../core/theme/mountain_palette.dart';
+import '../../../../../core/theme/theme_provider.dart';
 
 /// 코스 선택 시 시트 내용: 설명 · 거리/예상시간/난이도 · 완주자 · 경유 지점 · 구조 표지판(참고용).
 class CourseSheetContent extends ConsumerWidget {
@@ -28,7 +30,22 @@ class CourseSheetContent extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.course.name, style: text.titleMedium),
+        Row(
+          children: [
+            if (ref.watch(themeVariantProvider).isSketch) ...[
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: MountainPalette.of(s.course.mountainGroup, ink: ref.watch(themeVariantProvider).inkTone),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(child: Text(s.course.name, style: text.titleMedium)),
+          ],
+        ),
         const SizedBox(height: 2),
         Text(
           '${s.course.mountainGroup} · ${stats.lengthKm.toStringAsFixed(1)}km · 예상 ${formatMinutes(stats.estUpMin)} · ${stats.level.label}',

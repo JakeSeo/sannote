@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/theme/mountain_palette.dart';
+import '../../../../../core/theme/theme_provider.dart';
+
 import '../../../../courses/presentation/widgets/course_tile.dart';
 import '../../../../records/domain/entities/hike.dart';
 import '../../../../records/presentation/viewmodels/records_providers.dart';
@@ -20,6 +24,7 @@ class StatsSheetContent extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final totalMin = hikes.fold(0, (sum, h) => sum + h.durationMin);
+    final variant = ref.watch(themeVariantProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +63,10 @@ class StatsSheetContent extends ConsumerWidget {
             spacing: 6,
             runSpacing: 4,
             children: [
-              for (final g in stats.mountainGroups) Chip(avatar: const Icon(Icons.verified, size: 16), label: Text(g)),
+              for (final g in stats.mountainGroups)
+                variant.isSketch
+                    ? _Stamp(label: g, color: MountainPalette.of(g, ink: variant.inkTone))
+                    : Chip(avatar: const Icon(Icons.verified, size: 16), label: Text(g)),
             ],
           ),
         ],
@@ -144,27 +152,56 @@ class _LiveHeader extends StatelessWidget {
   }
 }
 
-class _Tile extends StatelessWidget {
+class _Tile extends ConsumerWidget {
   const _Tile(this.label, this.value);
 
   final String label;
   final String value;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final sketch = ref.watch(themeVariantProvider).isSketch;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: scheme.surfaceContainerHighest.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: sketch ? AppTheme.paperCard : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: sketch ? Border.all(color: AppTheme.paperLine) : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: text.titleMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+          Text(value,
+              style: sketch
+                  ? text.headlineSmall?.copyWith(fontSize: 24)
+                  : text.titleMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
           Text(label, style: text.bodySmall),
         ],
       ),
+    );
+  }
+}
+
+/// 색연필로 칠한 원형 스탬프 (다녀온 산)
+class _Stamp extends StatelessWidget {
+  const _Stamp({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color, width: 2),
+      ),
+      child: Text(label, style: TextStyle(fontFamily: AppTheme.handwriting, fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.ink, height: 1.1)),
     );
   }
 }

@@ -30,4 +30,14 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+  fonts:
+    # 손글씨 제목용 (OFL, assets/fonts/OFL.txt)
+    - family: Gaegu
+      fonts:
+        - asset: assets/fonts/Gaegu-Regular.ttf
+        - asset: assets/fonts/Gaegu-Bold.ttf
+          weight: 700
+    - family: NanumPenScript
+      fonts:
+        - asset: assets/fonts/NanumPenScript-Regular.ttf
 

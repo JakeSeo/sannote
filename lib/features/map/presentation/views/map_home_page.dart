@@ -4,6 +4,11 @@ import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/dev/developer_menu.dart';
+import '../../../../core/map/marker_icons.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/mountain_palette.dart';
+import '../../../../core/theme/paper_texture.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../courses/domain/usecases/get_course_summaries.dart';
 import '../../../records/domain/entities/hike.dart';
 import '../../../records/presentation/viewmodels/recording_view_model.dart';
@@ -99,6 +104,12 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
     ref.listen(mapViewModelProvider, (_, next) {
       _sync?.apply(next);
       _handleCamera(next.cameraCommand);
+    });
+    ref.listen(themeVariantProvider, (_, v) async {
+      final sync = _sync;
+      if (sync == null) return;
+      sync.setStyle(await _buildStyle(v));
+      if (mounted) await sync.apply(ref.read(mapViewModelProvider));
     });
     // 사용자가 직접 고른 선택(검색·마커 탭)에만 시트를 올린다. 카메라 이동에 따른 자동 포커스는 지도 강조만.
     ref.listen(mapViewModelProvider.select((s) => (s.explicitMountain?.mountainGroup, s.selectedCourse?.course.courseId)),
@@ -267,11 +278,26 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
 
   // ---------- 지도 이벤트 ----------
 
-  void _onMapReady(NaverMapController controller) {
+  /// 테마 → 지도 스타일. 스케치북이면 산별 색연필 색 + 손그림 마커.
+  Future<MapStyle> _buildStyle(ThemeVariant v) async {
+    if (!v.isSketch) return MapStyle.plain(AppTheme.accentOf(v));
+    final groups = ref.read(mapViewModelProvider).mountains.value?.map((m) => m.mountainGroup).toList() ?? const <String>[];
+    final icons = <String, NOverlayImage>{};
+    for (final g in groups) {
+      icons[g] = await MarkerIcons.mountain(MountainPalette.of(g, ink: true));
+    }
+    return MapStyle(colorOf: (g) => MountainPalette.of(g, ink: v.inkTone), pencil: true, markerIcons: icons);
+  }
+
+  Future<void> _onMapReady(NaverMapController controller) async {
     debugPrint('[map] naver map ready');
     _controller = controller;
     final vm = ref.read(mapViewModelProvider.notifier);
-    _sync = MapOverlaySync(controller, onMountainTap: vm.selectMountain);
+    // 산 데이터가 있어야 마커 아이콘을 만들 수 있으니 잠깐 기다린다 (최대 3초)
+    for (var i = 0; i < 10 && ref.read(mapViewModelProvider).mountains.value == null; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    }
+    _sync = MapOverlaySync(controller, onMountainTap: vm.selectMountain, style: await _buildStyle(ref.read(themeVariantProvider)));
     _sync!.apply(ref.read(mapViewModelProvider));
     if (widget.initialCourseId != null || widget.initialMountainGroup != null) {
       _applyInitialSelection();
@@ -373,7 +399,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends ConsumerWidget {
   const _SearchBar({required this.onTap, this.label, this.onClear});
 
   final VoidCallback onTap;
@@ -381,9 +407,10 @@ class _SearchBar extends StatelessWidget {
   final VoidCallback? onClear;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final sketch = ref.watch(themeVariantProvider).isSketch;
     return Material(
       color: scheme.surface,
       elevation: 2,
@@ -395,8 +422,15 @@ class _SearchBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              Icon(Icons.search, color: scheme.onSurfaceVariant),
-              const SizedBox(width: 10),
+              if (sketch) ...[
+                Text('산노트', style: TextStyle(fontFamily: AppTheme.handwriting, fontSize: 24, fontWeight: FontWeight.w700, color: scheme.onSurface, height: 1)),
+                const SizedBox(width: 10),
+                Container(width: 1, height: 20, color: scheme.outlineVariant),
+                const SizedBox(width: 10),
+              ] else ...[
+                Icon(Icons.search, color: scheme.onSurfaceVariant),
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 child: Text(
                   label == null || label!.isEmpty ? '산, 코스 검색' : label!,
@@ -449,7 +483,7 @@ class _HomeMenu extends StatelessWidget {
   }
 }
 
-class _SheetBody extends StatelessWidget {
+class _SheetBody extends ConsumerWidget {
   const _SheetBody({required this.scroll, required this.child, this.onClose});
 
   final ScrollController scroll;
@@ -457,14 +491,10 @@ class _SheetBody extends StatelessWidget {
   final VoidCallback? onClose;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surface,
-      elevation: 8,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      clipBehavior: Clip.antiAlias,
-      child: ListView(
+    final sketch = ref.watch(themeVariantProvider).isSketch;
+    final list = ListView(
         controller: scroll,
         padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.paddingOf(context).bottom + 24),
         children: [
@@ -483,7 +513,13 @@ class _SheetBody extends StatelessWidget {
             ),
           child,
         ],
-      ),
+      );
+    return Material(
+      color: sketch ? Colors.transparent : scheme.surface,
+      elevation: 8,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      clipBehavior: Clip.antiAlias,
+      child: sketch ? PaperTexture(color: AppTheme.paper, child: list) : list,
     );
   }
 }
