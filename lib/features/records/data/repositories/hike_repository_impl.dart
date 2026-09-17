@@ -52,6 +52,8 @@ class HikeRepositoryImpl implements HikeRepository {
     String? mountainGroup,
     int pausedSec = 0,
     int movingSec = 0,
+    int? batteryStart,
+    int? batteryEnd,
   }) =>
       _service.updateHike(
         hikeId,
@@ -59,6 +61,8 @@ class HikeRepositoryImpl implements HikeRepository {
           endedAt: Value(endedAt),
           pausedSec: Value(pausedSec),
           movingSec: Value(movingSec),
+          batteryStart: Value(batteryStart),
+          batteryEnd: Value(batteryEnd),
           status: Value(status.name),
           distanceKm: Value(distanceKm),
           coverage: Value(coverage),
@@ -120,6 +124,8 @@ class HikeRepositoryImpl implements HikeRepository {
           visitId: r.visitId,
           pausedSec: r.pausedSec,
           movingSec: r.movingSec,
+          batteryStart: r.batteryStart,
+          batteryEnd: r.batteryEnd,
         );
 }
 

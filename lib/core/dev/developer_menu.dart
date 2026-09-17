@@ -6,6 +6,7 @@ import '../../features/courses/domain/usecases/get_course_summaries.dart';
 import '../location/location_provider.dart';
 import '../location/mock_location_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/map_appearance.dart';
 import '../theme/theme_provider.dart';
 
 /// 디버그 빌드에서만 노출되는 개발자 메뉴 (톤앤매너 전환, 위치 소스 확인).
@@ -47,6 +48,7 @@ class _DeveloperMenuSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final variant = ref.watch(themeVariantProvider);
+    final appearance = ref.watch(mapAppearanceProvider);
     final location = ref.watch(locationServiceProvider);
     final text = Theme.of(context).textTheme;
     return SafeArea(
@@ -64,6 +66,18 @@ class _DeveloperMenuSheet extends ConsumerWidget {
               children: [
                 for (final v in ThemeVariant.values)
                   RadioListTile<ThemeVariant>(value: v, title: Text(v.label), subtitle: Text(v.summary)),
+              ],
+            ),
+          ),
+          const Divider(),
+          Text('지도 배경', style: text.labelLarge),
+          RadioGroup<MapAppearance>(
+            groupValue: appearance,
+            onChanged: (v) => v == null ? null : ref.read(mapAppearanceProvider.notifier).set(v),
+            child: Column(
+              children: [
+                for (final v in MapAppearance.values)
+                  RadioListTile<MapAppearance>(value: v, title: Text(v.label), subtitle: Text(v.summary)),
               ],
             ),
           ),

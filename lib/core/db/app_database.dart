@@ -28,6 +28,10 @@ class Hikes extends Table {
   /// 이동 시간(초): 점 사이 간격 중 실제로 움직인 구간 합 (ComputeMovingTime). 표시용 소요시간
   IntColumn get movingSec => integer().withDefault(const Constant(0))();
 
+  /// 개발용: 시작/종료 시 배터리 % (모르면 null)
+  IntColumn get batteryStart => integer().nullable()();
+  IntColumn get batteryEnd => integer().nullable()();
+
   /// 서버 visits에 올라간 시각. null = 전송 대기
   DateTimeColumn get syncedAt => dateTime().nullable()();
   TextColumn get visitId => text().nullable()();
@@ -51,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'sannote'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,6 +75,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 4) {
             // v4: 이동 시간(초)
             await m.addColumn(hikes, hikes.movingSec);
+          }
+          if (from < 5) {
+            // v5: 배터리 시작/종료 %
+            await m.addColumn(hikes, hikes.batteryStart);
+            await m.addColumn(hikes, hikes.batteryEnd);
           }
         },
       );

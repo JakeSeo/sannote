@@ -4,7 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/geo/geo_point.dart';
+import '../../../../core/device/battery.dart';
 import '../../../../core/location/location_provider.dart';
+import '../../../../core/location/location_service.dart';
+import '../../../../core/location/mock_location_service.dart';
 import '../../../courses/domain/entities/course_summary.dart';
 import '../../data/repositories/hike_repository_impl.dart';
 import '../../domain/entities/hike.dart';
@@ -110,6 +113,8 @@ const _debugAutoFinish = String.fromEnvironment('SANNOTE_AUTOFINISH');
 class RecordingViewModel extends Notifier<RecordingState> {
   StreamSubscription<GeoPoint>? _sub;
   Timer? _ticker;
+  TrackingProfile _profile = TrackingProfile.foreground;
+  int? _batteryAtStart;
 
   @override
   RecordingState build() {
@@ -132,7 +137,9 @@ class RecordingViewModel extends Notifier<RecordingState> {
     final hike = await ref.read(startHikeProvider).call(course: course?.course);
     state = RecordingState(hike: hike, course: course, lastMovedAt: DateTime.now());
     _listen();
-    debugPrint('[record] 시작: ${course?.course.name ?? '자유 산행'} (${ref.read(locationServiceProvider).label})');
+    _batteryAtStart = await ref.read(batteryProvider).level();
+    debugPrint('[record] 시작: ${course?.course.name ?? '자유 산행'} (${ref.read(locationServiceProvider).label}) '
+        '배터리 ${_batteryAtStart ?? '?'}%');
   }
 
   /// 미종료 산행 이어가기 (트랙 복원 후 스트림 재구독)
@@ -151,9 +158,18 @@ class RecordingViewModel extends Notifier<RecordingState> {
 
   void dismissResumable() => state = state.copyWith(resumable: null);
 
-  void _listen() {
-    _stopStream();
-    _sub = ref.read(locationServiceProvider).positions().listen(
+  /// 화면 켜짐/꺼짐에 따라 간격 프로필 전환. 스트림을 다시 구독한다 (Mock 재생 중에는 바꾸지 않음).
+  void setProfile(TrackingProfile profile) {
+    if (!state.isRecording || profile == _profile) return;
+    if (ref.read(locationServiceProvider) is MockLocationService) return;
+    _profile = profile;
+    debugPrint('[record] 간격 전환 → ${profile.name} (${profile.interval.inSeconds}s / ${profile.distanceM}m)');
+    _listen(keepTicker: true);
+  }
+
+  void _listen({bool keepTicker = false}) {
+    _stopStream(keepTicker: keepTicker);
+    _sub = ref.read(locationServiceProvider).positions(profile: _profile).listen(
       _onFix,
       onError: (Object e) {
         debugPrint('[record] 위치 스트림 오류: $e');
@@ -170,9 +186,11 @@ class RecordingViewModel extends Notifier<RecordingState> {
         }
       },
     );
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (state.isRecording) state = state.copyWith(); // 경과 시간 갱신
-    });
+    if (!keepTicker) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (state.isRecording) state = state.copyWith(); // 경과 시간 갱신
+      });
+    }
   }
 
   /// 휴식 표시. 리스닝과 저장은 그대로 계속된다 (UI 상태만 바뀜)
@@ -249,15 +267,22 @@ class RecordingViewModel extends Notifier<RecordingState> {
     _stopStream();
     final course = match?.course ?? state.course;
     final coverage = match?.coverage;
+    final batteryAtEnd = await ref.read(batteryProvider).level();
     await ref.read(finishHikeProvider).call(
       hike.id,
       status: status,
       coverage: coverage,
       course: course?.course,
+      batteryStart: _batteryAtStart,
+      batteryEnd: batteryAtEnd,
     );
+    final drain = _batteryAtStart != null && batteryAtEnd != null ? '${_batteryAtStart! - batteryAtEnd}%p 소모' : '?';
     debugPrint('[record] 종료: ${course?.course.name ?? '자유 산행'} → ${status.name}, '
         '커버율 ${coverage == null ? '-' : '${(coverage * 100).round()}%'}, '
-        '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km, 이동 ${state.movingTime.inSeconds}초 / 총 ${state.elapsed.inSeconds}초');
+        '${state.track.length}점 ${state.distanceKm.toStringAsFixed(2)}km, 이동 ${state.movingTime.inSeconds}초 / 총 ${state.elapsed.inSeconds}초, '
+        '배터리 ${_batteryAtStart ?? '?'}% → ${batteryAtEnd ?? '?'}% ($drain, 프로필 ${_profile.name})');
+    _batteryAtStart = null;
+    _profile = TrackingProfile.foreground;
     state = const RecordingState();
     if (status == HikeStatus.completed && course != null) {
       unawaited(ref.read(syncVisitsProvider).call());
@@ -271,11 +296,13 @@ class RecordingViewModel extends Notifier<RecordingState> {
     await finish(top == null ? HikeStatus.partial : status, match: top);
   }
 
-  void _stopStream() {
+  void _stopStream({bool keepTicker = false}) {
     _sub?.cancel();
     _sub = null;
-    _ticker?.cancel();
-    _ticker = null;
+    if (!keepTicker) {
+      _ticker?.cancel();
+      _ticker = null;
+    }
   }
 }
 

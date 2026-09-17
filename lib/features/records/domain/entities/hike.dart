@@ -30,6 +30,8 @@ class Hike {
     required this.visitId,
     this.pausedSec = 0,
     this.movingSec = 0,
+    this.batteryStart,
+    this.batteryEnd,
   });
 
   final String id;
@@ -53,6 +55,11 @@ class Hike {
 
   /// 이동 시간(초). 0이면(옛 기록·점 없음) 총 경과에서 일시정지를 뺀 값을 대신 쓴다
   final int movingSec;
+
+  /// 개발용 배터리 % (시작/종료). 모르면 null
+  final int? batteryStart;
+  final int? batteryEnd;
+  int? get batteryDrain => batteryStart != null && batteryEnd != null ? batteryStart! - batteryEnd! : null;
 
   /// 총 경과 (시작~종료, 일시정지 제외)
   Duration get totalDuration => (endedAt ?? DateTime.now()).difference(startedAt) - Duration(seconds: pausedSec);

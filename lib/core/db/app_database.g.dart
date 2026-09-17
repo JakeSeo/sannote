@@ -129,6 +129,28 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _batteryStartMeta = const VerificationMeta(
+    'batteryStart',
+  );
+  @override
+  late final GeneratedColumn<int> batteryStart = GeneratedColumn<int>(
+    'battery_start',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _batteryEndMeta = const VerificationMeta(
+    'batteryEnd',
+  );
+  @override
+  late final GeneratedColumn<int> batteryEnd = GeneratedColumn<int>(
+    'battery_end',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _syncedAtMeta = const VerificationMeta(
     'syncedAt',
   );
@@ -164,6 +186,8 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
     coverage,
     pausedSec,
     movingSec,
+    batteryStart,
+    batteryEnd,
     syncedAt,
     visitId,
   ];
@@ -249,6 +273,21 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
         movingSec.isAcceptableOrUnknown(data['moving_sec']!, _movingSecMeta),
       );
     }
+    if (data.containsKey('battery_start')) {
+      context.handle(
+        _batteryStartMeta,
+        batteryStart.isAcceptableOrUnknown(
+          data['battery_start']!,
+          _batteryStartMeta,
+        ),
+      );
+    }
+    if (data.containsKey('battery_end')) {
+      context.handle(
+        _batteryEndMeta,
+        batteryEnd.isAcceptableOrUnknown(data['battery_end']!, _batteryEndMeta),
+      );
+    }
     if (data.containsKey('synced_at')) {
       context.handle(
         _syncedAtMeta,
@@ -314,6 +353,14 @@ class $HikesTable extends Hikes with TableInfo<$HikesTable, Hike> {
         DriftSqlType.int,
         data['${effectivePrefix}moving_sec'],
       )!,
+      batteryStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}battery_start'],
+      ),
+      batteryEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}battery_end'],
+      ),
       syncedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}synced_at'],
@@ -354,6 +401,10 @@ class Hike extends DataClass implements Insertable<Hike> {
   /// 이동 시간(초): 점 사이 간격 중 실제로 움직인 구간 합 (ComputeMovingTime). 표시용 소요시간
   final int movingSec;
 
+  /// 개발용: 시작/종료 시 배터리 % (모르면 null)
+  final int? batteryStart;
+  final int? batteryEnd;
+
   /// 서버 visits에 올라간 시각. null = 전송 대기
   final DateTime? syncedAt;
   final String? visitId;
@@ -369,6 +420,8 @@ class Hike extends DataClass implements Insertable<Hike> {
     this.coverage,
     required this.pausedSec,
     required this.movingSec,
+    this.batteryStart,
+    this.batteryEnd,
     this.syncedAt,
     this.visitId,
   });
@@ -396,6 +449,12 @@ class Hike extends DataClass implements Insertable<Hike> {
     }
     map['paused_sec'] = Variable<int>(pausedSec);
     map['moving_sec'] = Variable<int>(movingSec);
+    if (!nullToAbsent || batteryStart != null) {
+      map['battery_start'] = Variable<int>(batteryStart);
+    }
+    if (!nullToAbsent || batteryEnd != null) {
+      map['battery_end'] = Variable<int>(batteryEnd);
+    }
     if (!nullToAbsent || syncedAt != null) {
       map['synced_at'] = Variable<DateTime>(syncedAt);
     }
@@ -428,6 +487,12 @@ class Hike extends DataClass implements Insertable<Hike> {
           : Value(coverage),
       pausedSec: Value(pausedSec),
       movingSec: Value(movingSec),
+      batteryStart: batteryStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(batteryStart),
+      batteryEnd: batteryEnd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(batteryEnd),
       syncedAt: syncedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(syncedAt),
@@ -454,6 +519,8 @@ class Hike extends DataClass implements Insertable<Hike> {
       coverage: serializer.fromJson<double?>(json['coverage']),
       pausedSec: serializer.fromJson<int>(json['pausedSec']),
       movingSec: serializer.fromJson<int>(json['movingSec']),
+      batteryStart: serializer.fromJson<int?>(json['batteryStart']),
+      batteryEnd: serializer.fromJson<int?>(json['batteryEnd']),
       syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
       visitId: serializer.fromJson<String?>(json['visitId']),
     );
@@ -473,6 +540,8 @@ class Hike extends DataClass implements Insertable<Hike> {
       'coverage': serializer.toJson<double?>(coverage),
       'pausedSec': serializer.toJson<int>(pausedSec),
       'movingSec': serializer.toJson<int>(movingSec),
+      'batteryStart': serializer.toJson<int?>(batteryStart),
+      'batteryEnd': serializer.toJson<int?>(batteryEnd),
       'syncedAt': serializer.toJson<DateTime?>(syncedAt),
       'visitId': serializer.toJson<String?>(visitId),
     };
@@ -490,6 +559,8 @@ class Hike extends DataClass implements Insertable<Hike> {
     Value<double?> coverage = const Value.absent(),
     int? pausedSec,
     int? movingSec,
+    Value<int?> batteryStart = const Value.absent(),
+    Value<int?> batteryEnd = const Value.absent(),
     Value<DateTime?> syncedAt = const Value.absent(),
     Value<String?> visitId = const Value.absent(),
   }) => Hike(
@@ -506,6 +577,8 @@ class Hike extends DataClass implements Insertable<Hike> {
     coverage: coverage.present ? coverage.value : this.coverage,
     pausedSec: pausedSec ?? this.pausedSec,
     movingSec: movingSec ?? this.movingSec,
+    batteryStart: batteryStart.present ? batteryStart.value : this.batteryStart,
+    batteryEnd: batteryEnd.present ? batteryEnd.value : this.batteryEnd,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
     visitId: visitId.present ? visitId.value : this.visitId,
   );
@@ -528,6 +601,12 @@ class Hike extends DataClass implements Insertable<Hike> {
       coverage: data.coverage.present ? data.coverage.value : this.coverage,
       pausedSec: data.pausedSec.present ? data.pausedSec.value : this.pausedSec,
       movingSec: data.movingSec.present ? data.movingSec.value : this.movingSec,
+      batteryStart: data.batteryStart.present
+          ? data.batteryStart.value
+          : this.batteryStart,
+      batteryEnd: data.batteryEnd.present
+          ? data.batteryEnd.value
+          : this.batteryEnd,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
       visitId: data.visitId.present ? data.visitId.value : this.visitId,
     );
@@ -547,6 +626,8 @@ class Hike extends DataClass implements Insertable<Hike> {
           ..write('coverage: $coverage, ')
           ..write('pausedSec: $pausedSec, ')
           ..write('movingSec: $movingSec, ')
+          ..write('batteryStart: $batteryStart, ')
+          ..write('batteryEnd: $batteryEnd, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('visitId: $visitId')
           ..write(')'))
@@ -566,6 +647,8 @@ class Hike extends DataClass implements Insertable<Hike> {
     coverage,
     pausedSec,
     movingSec,
+    batteryStart,
+    batteryEnd,
     syncedAt,
     visitId,
   );
@@ -584,6 +667,8 @@ class Hike extends DataClass implements Insertable<Hike> {
           other.coverage == this.coverage &&
           other.pausedSec == this.pausedSec &&
           other.movingSec == this.movingSec &&
+          other.batteryStart == this.batteryStart &&
+          other.batteryEnd == this.batteryEnd &&
           other.syncedAt == this.syncedAt &&
           other.visitId == this.visitId);
 }
@@ -600,6 +685,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
   final Value<double?> coverage;
   final Value<int> pausedSec;
   final Value<int> movingSec;
+  final Value<int?> batteryStart;
+  final Value<int?> batteryEnd;
   final Value<DateTime?> syncedAt;
   final Value<String?> visitId;
   final Value<int> rowid;
@@ -615,6 +702,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     this.coverage = const Value.absent(),
     this.pausedSec = const Value.absent(),
     this.movingSec = const Value.absent(),
+    this.batteryStart = const Value.absent(),
+    this.batteryEnd = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.visitId = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -631,6 +720,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     this.coverage = const Value.absent(),
     this.pausedSec = const Value.absent(),
     this.movingSec = const Value.absent(),
+    this.batteryStart = const Value.absent(),
+    this.batteryEnd = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.visitId = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -648,6 +739,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     Expression<double>? coverage,
     Expression<int>? pausedSec,
     Expression<int>? movingSec,
+    Expression<int>? batteryStart,
+    Expression<int>? batteryEnd,
     Expression<DateTime>? syncedAt,
     Expression<String>? visitId,
     Expression<int>? rowid,
@@ -664,6 +757,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
       if (coverage != null) 'coverage': coverage,
       if (pausedSec != null) 'paused_sec': pausedSec,
       if (movingSec != null) 'moving_sec': movingSec,
+      if (batteryStart != null) 'battery_start': batteryStart,
+      if (batteryEnd != null) 'battery_end': batteryEnd,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (visitId != null) 'visit_id': visitId,
       if (rowid != null) 'rowid': rowid,
@@ -682,6 +777,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     Value<double?>? coverage,
     Value<int>? pausedSec,
     Value<int>? movingSec,
+    Value<int?>? batteryStart,
+    Value<int?>? batteryEnd,
     Value<DateTime?>? syncedAt,
     Value<String?>? visitId,
     Value<int>? rowid,
@@ -698,6 +795,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
       coverage: coverage ?? this.coverage,
       pausedSec: pausedSec ?? this.pausedSec,
       movingSec: movingSec ?? this.movingSec,
+      batteryStart: batteryStart ?? this.batteryStart,
+      batteryEnd: batteryEnd ?? this.batteryEnd,
       syncedAt: syncedAt ?? this.syncedAt,
       visitId: visitId ?? this.visitId,
       rowid: rowid ?? this.rowid,
@@ -740,6 +839,12 @@ class HikesCompanion extends UpdateCompanion<Hike> {
     if (movingSec.present) {
       map['moving_sec'] = Variable<int>(movingSec.value);
     }
+    if (batteryStart.present) {
+      map['battery_start'] = Variable<int>(batteryStart.value);
+    }
+    if (batteryEnd.present) {
+      map['battery_end'] = Variable<int>(batteryEnd.value);
+    }
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
@@ -766,6 +871,8 @@ class HikesCompanion extends UpdateCompanion<Hike> {
           ..write('coverage: $coverage, ')
           ..write('pausedSec: $pausedSec, ')
           ..write('movingSec: $movingSec, ')
+          ..write('batteryStart: $batteryStart, ')
+          ..write('batteryEnd: $batteryEnd, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('visitId: $visitId, ')
           ..write('rowid: $rowid')
@@ -1249,6 +1356,8 @@ typedef $$HikesTableCreateCompanionBuilder = HikesCompanion Function({
   Value<double?> coverage,
   Value<int> pausedSec,
   Value<int> movingSec,
+  Value<int?> batteryStart,
+  Value<int?> batteryEnd,
   Value<DateTime?> syncedAt,
   Value<String?> visitId,
   Value<int> rowid,
@@ -1265,6 +1374,8 @@ typedef $$HikesTableUpdateCompanionBuilder = HikesCompanion Function({
   Value<double?> coverage,
   Value<int> pausedSec,
   Value<int> movingSec,
+  Value<int?> batteryStart,
+  Value<int?> batteryEnd,
   Value<DateTime?> syncedAt,
   Value<String?> visitId,
   Value<int> rowid,
@@ -1353,6 +1464,16 @@ class $$HikesTableFilterComposer extends Composer<_$AppDatabase, $HikesTable> {
 
   ColumnFilters<int> get movingSec => $composableBuilder(
     column: $table.movingSec,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get batteryStart => $composableBuilder(
+    column: $table.batteryStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get batteryEnd => $composableBuilder(
+    column: $table.batteryEnd,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1456,6 +1577,16 @@ class $$HikesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get batteryStart => $composableBuilder(
+    column: $table.batteryStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get batteryEnd => $composableBuilder(
+    column: $table.batteryEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
     column: $table.syncedAt,
     builder: (column) => ColumnOrderings(column),
@@ -1514,6 +1645,16 @@ class $$HikesTableAnnotationComposer
 
   GeneratedColumn<int> get movingSec =>
       $composableBuilder(column: $table.movingSec, builder: (column) => column);
+
+  GeneratedColumn<int> get batteryStart => $composableBuilder(
+    column: $table.batteryStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get batteryEnd => $composableBuilder(
+    column: $table.batteryEnd,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get syncedAt =>
       $composableBuilder(column: $table.syncedAt, builder: (column) => column);
@@ -1586,6 +1727,8 @@ class $$HikesTableTableManager
                 Value<double?> coverage = const Value.absent(),
                 Value<int> pausedSec = const Value.absent(),
                 Value<int> movingSec = const Value.absent(),
+                Value<int?> batteryStart = const Value.absent(),
+                Value<int?> batteryEnd = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
                 Value<String?> visitId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1601,6 +1744,8 @@ class $$HikesTableTableManager
                 coverage: coverage,
                 pausedSec: pausedSec,
                 movingSec: movingSec,
+                batteryStart: batteryStart,
+                batteryEnd: batteryEnd,
                 syncedAt: syncedAt,
                 visitId: visitId,
                 rowid: rowid,
@@ -1618,6 +1763,8 @@ class $$HikesTableTableManager
                 Value<double?> coverage = const Value.absent(),
                 Value<int> pausedSec = const Value.absent(),
                 Value<int> movingSec = const Value.absent(),
+                Value<int?> batteryStart = const Value.absent(),
+                Value<int?> batteryEnd = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
                 Value<String?> visitId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1633,6 +1780,8 @@ class $$HikesTableTableManager
                 coverage: coverage,
                 pausedSec: pausedSec,
                 movingSec: movingSec,
+                batteryStart: batteryStart,
+                batteryEnd: batteryEnd,
                 syncedAt: syncedAt,
                 visitId: visitId,
                 rowid: rowid,

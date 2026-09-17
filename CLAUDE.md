@@ -67,7 +67,7 @@ v1은 정보+기록 앱. GPS 실시간 트래킹은 v2 이후 (BACKLOG.md 참조
 ## 운영자 도구·마이그레이션
 - DDL은 `supabase/migrations/*.sql`에 번호 순으로 두고, 사용자가 SQL Editor에서 직접 실행 (publishable key로 DDL 불가)
 - 데이터 입력은 `tools/*.py` 스크립트(표준 라이브러리만, `.env` 읽음). 어드민 화면 만들지 않음
-- 디버그 전용 진입: `--dart-define=SANNOTE_START=explore|records|mountain:<산군>|course:<id>|autohike:<course_id>`, `SANNOTE_THEME=forest|dawn`, `SANNOTE_LOCATION=mock`, `SANNOTE_AUTOFINISH=completed|partial` (autohike = Mock 코스 재생으로 기록→종료→색칠 자동 검증)
+- 디버그 전용 진입: `--dart-define=SANNOTE_START=explore|records|mountain:<산군>|course:<id>|autohike:<course_id>`, `SANNOTE_THEME=forest|dawn`, `SANNOTE_LOCATION=mock`, `SANNOTE_AUTOFINISH=completed|partial`, `SANNOTE_MAP=quiet|terrainQuiet`, `SANNOTE_START=search|settings|hike:<id>` (autohike = Mock 코스 재생으로 기록→종료→색칠 자동 검증)
 - 로컬 DB(drift) 스키마 변경 시 `fvm dart run build_runner build --delete-conflicting-outputs` 후 schemaVersion 올리고 마이그레이션 작성
 - 개발자 메뉴: 탐색 탭 제목 길게 누르기 (kDebugMode 에서만)
 

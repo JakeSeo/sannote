@@ -4,8 +4,10 @@ import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/dev/developer_menu.dart';
+import '../../../../core/location/location_service.dart';
 import '../../../../core/map/marker_icons.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/map_appearance.dart';
 import '../../../../core/theme/mountain_palette.dart';
 import '../../../../core/theme/paper_texture.dart';
 import '../../../../core/theme/theme_provider.dart';
@@ -74,6 +76,17 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
   /// 앱으로 돌아왔을 때 10분 넘게 움직임이 없었으면 종료를 제안한다 (자동 종료는 하지 않음)
   @override
   void didChangeAppLifecycleState(AppLifecycleState s) {
+    // 화면 꺼짐/백그라운드 → 느슨한 간격, 복귀 → 촘촘한 간격
+    final vm = ref.read(recordingViewModelProvider.notifier);
+    switch (s) {
+      case AppLifecycleState.resumed:
+        vm.setProfile(TrackingProfile.foreground);
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+        vm.setProfile(TrackingProfile.background);
+      default:
+        break;
+    }
     if (s != AppLifecycleState.resumed || _askingFinish) return;
     if (!ref.read(recordingViewModelProvider.notifier).shouldAskFinish()) return;
     _askingFinish = true;
@@ -124,6 +137,7 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
     final mountain = state.explicitMountain;
     final course = state.selectedCourse;
     final hasSelection = mountain != null || course != null;
+    final appearance = ref.watch(mapAppearanceProvider);
 
     return PopScope(
       canPop: false,
@@ -153,6 +167,9 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
                     minZoom: 8,
                     logoClickEnable: false,
                     scaleBarEnable: false,
+                    // 배경을 조용히: 상점·랜드마크 심볼 크기 0 = 숨김. 지형 타입은 음영·등고선
+                    symbolScale: appearance.symbolScale,
+                    mapType: appearance.terrain ? NMapType.terrain : NMapType.basic,
                   ),
                   onMapReady: _onMapReady,
                   onCameraIdle: _onCameraIdle,

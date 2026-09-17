@@ -56,14 +56,14 @@ class GeolocatorLocationService implements LocationService {
     }
   }
 
-  /// 기록용 스트림. 10~15초 간격, 화면 꺼져도 유지 (Android 포그라운드 서비스 / iOS 백그라운드 위치).
+  /// 기록용 스트림. 화면 꺼져도 유지 (Android 포그라운드 서비스 / iOS 백그라운드 위치).
   @override
-  Stream<GeoPoint> positions() {
+  Stream<GeoPoint> positions({TrackingProfile profile = TrackingProfile.foreground}) {
     final settings = switch (defaultTargetPlatform) {
       TargetPlatform.android => AndroidSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: 5,
-          intervalDuration: const Duration(seconds: 12),
+          distanceFilter: profile.distanceM,
+          intervalDuration: profile.interval,
           foregroundNotificationConfig: const ForegroundNotificationConfig(
             notificationTitle: '산노트 기록 중',
             notificationText: '산행 트랙을 기록하고 있어요. 종료는 앱에서 눌러주세요.',
@@ -72,13 +72,13 @@ class GeolocatorLocationService implements LocationService {
         ),
       TargetPlatform.iOS => AppleSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: 5,
+          distanceFilter: profile.distanceM,
           activityType: ActivityType.fitness,
           pauseLocationUpdatesAutomatically: false,
           allowBackgroundLocationUpdates: true,
           showBackgroundLocationIndicator: true,
         ),
-      _ => const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 5),
+      _ => LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: profile.distanceM),
     };
     return Geolocator.getPositionStream(locationSettings: settings)
         .map((p) => (lat: p.latitude, lon: p.longitude));

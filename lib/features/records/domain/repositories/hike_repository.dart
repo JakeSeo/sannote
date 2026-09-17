@@ -25,6 +25,8 @@ abstract interface class HikeRepository {
     String? mountainGroup,
     int pausedSec = 0,
     int movingSec = 0,
+    int? batteryStart,
+    int? batteryEnd,
   });
 
   Future<void> markSynced(String hikeId, {required String visitId, required DateTime syncedAt});

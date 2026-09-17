@@ -75,6 +75,7 @@ class HikeDetailPage extends ConsumerWidget {
                       if (!h.hasCourse) '자유 산행 (코스 미확정)',
                       if (h.coverage != null) '코스 커버율 약 ${(h.coverage! * 100).round()}%',
                       if (h.isCompleted) (h.syncedAt == null ? '서버 전송 대기' : '서버 전송 완료'),
+                      if (h.batteryDrain != null) '배터리 ${h.batteryStart}% → ${h.batteryEnd}% (${h.batteryDrain}%p)',
                     ].join(' · '),
                     style: text.bodySmall,
                   ),

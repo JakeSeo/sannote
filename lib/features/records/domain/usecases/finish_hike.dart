@@ -16,7 +16,15 @@ class FinishHike {
   final ComputeMovingTime _movingTime;
 
   /// [course]가 있으면 그 코스로 확정(자동 판별 결과 또는 미리 고른 코스). 없으면 자유 산행으로 남는다.
-  Future<void> call(String hikeId, {required HikeStatus status, required double? coverage, Course? course, int pausedSec = 0}) async {
+  Future<void> call(
+    String hikeId, {
+    required HikeStatus status,
+    required double? coverage,
+    Course? course,
+    int pausedSec = 0,
+    int? batteryStart,
+    int? batteryEnd,
+  }) async {
     if (status == HikeStatus.discarded) {
       await _repo.delete(hikeId);
       return;
@@ -33,6 +41,8 @@ class FinishHike {
       mountainGroup: course?.mountainGroup,
       pausedSec: pausedSec,
       movingSec: _movingTime(points).inSeconds,
+      batteryStart: batteryStart,
+      batteryEnd: batteryEnd,
     );
   }
 
