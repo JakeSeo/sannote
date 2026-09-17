@@ -47,7 +47,7 @@ class RecordingState {
   /// 앱이 죽었다 켜졌을 때 발견된 미종료 산행 (사용자에게 이어가기/종료 물어봄)
   final Hike? resumable;
 
-  /// 일시정지 상태. 위치는 받아도 저장하지 않고, 경과 시간에서 제외한다.
+  /// 휴식 표시 (UI 상태). 위치는 계속 저장되고, 시간은 어차피 점 기반 이동 시간이라 멈춰 있으면 자동으로 빠진다.
   final bool isPaused;
   final Duration pausedTotal;
   final DateTime? pausedSince;
@@ -175,11 +175,11 @@ class RecordingViewModel extends Notifier<RecordingState> {
     });
   }
 
-  /// 수동 일시정지: 버스 탑승처럼 의도적으로 빼고 싶을 때. 위치 저장 중단, 시간 제외 (스트림은 유지)
+  /// 휴식 표시. 리스닝과 저장은 그대로 계속된다 (UI 상태만 바뀜)
   void pause() {
     if (!state.isRecording || state.isPaused) return;
     state = state.copyWith(isPaused: true, pausedSince: DateTime.now());
-    debugPrint('[record] 일시정지');
+    debugPrint('[record] 휴식 표시');
   }
 
   void resumeRecording() {
@@ -190,23 +190,18 @@ class RecordingViewModel extends Notifier<RecordingState> {
       isPaused: false,
       pausedTotal: state.pausedTotal + (since == null ? Duration.zero : now.difference(since)),
       pausedSince: null,
-      lastFix: null, // 재시작 뒤 첫 점부터 다시 이동 시간을 잇는다
     );
-    debugPrint('[record] 재시작 (누적 일시정지 ${state.pausedTotal.inSeconds}초)');
+    debugPrint('[record] 휴식 해제 (누적 ${state.pausedTotal.inSeconds}초)');
   }
 
   /// 움직임이 [threshold] 이상 없으면 true → UI가 "도착하셨나요?" 확인을 띄운다 (자동 종료는 하지 않음)
   bool shouldAskFinish({Duration threshold = const Duration(minutes: 10)}) =>
-      state.isRecording && !state.isPaused && state.track.isNotEmpty && state.idleFor >= threshold;
+      state.isRecording && state.track.isNotEmpty && state.idleFor >= threshold;
 
   Future<void> _onFix(GeoPoint p) async {
     final hike = state.hike;
     if (hike == null) return;
     final now = DateTime.now();
-    if (state.isPaused) {
-      state = state.copyWith(lastFixAt: now, error: null);
-      return;
-    }
     if (state.track.length < 3 || state.track.length % 20 == 0) {
       debugPrint('[record] 위치 수신 #${state.track.length + 1}: ${p.lat.toStringAsFixed(5)}, ${p.lon.toStringAsFixed(5)}');
     }
@@ -259,7 +254,6 @@ class RecordingViewModel extends Notifier<RecordingState> {
       status: status,
       coverage: coverage,
       course: course?.course,
-      pausedSec: state.pausedSoFar.inSeconds,
     );
     debugPrint('[record] 종료: ${course?.course.name ?? '자유 산행'} → ${status.name}, '
         '커버율 ${coverage == null ? '-' : '${(coverage * 100).round()}%'}, '

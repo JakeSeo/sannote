@@ -8,7 +8,8 @@ import '../../../../courses/domain/entities/course_summary.dart';
 import '../../../../records/presentation/viewmodels/recording_view_model.dart';
 import '../../../../records/presentation/views/finish_flow.dart';
 
-/// 시트 위에 떠 있는 기록 버튼. 시작 전: [기록 시작] (코스가 선택돼 있으면 그 코스로), 기록 중: [일시정지/재시작] [정지].
+/// 시트 위에 떠 있는 기록 버튼. 시작 전: [기록 시작] (코스가 선택돼 있으면 그 코스로), 기록 중: [휴식/재시작] [정지].
+/// 휴식은 표시용이며 위치 저장은 계속된다. 멈춘 시간은 이동 시간 계산에서 자동으로 빠진다.
 class RecordControls extends ConsumerWidget {
   const RecordControls({super.key, this.selectedCourse});
 
@@ -30,8 +31,8 @@ class RecordControls extends ConsumerWidget {
       children: [
         FilledButton.tonalIcon(
           onPressed: recording.isPaused ? vm.resumeRecording : vm.pause,
-          icon: Icon(recording.isPaused ? Icons.play_arrow : Icons.pause),
-          label: Text(recording.isPaused ? '재시작' : '일시정지'),
+          icon: Icon(recording.isPaused ? Icons.directions_walk : Icons.free_breakfast_outlined),
+          label: Text(recording.isPaused ? '다시 출발' : '휴식'),
         ),
         const SizedBox(width: 10),
         FilledButton.icon(

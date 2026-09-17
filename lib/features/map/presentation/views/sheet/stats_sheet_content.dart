@@ -114,11 +114,11 @@ class _LiveHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(recording.isPaused ? Icons.pause_circle : Icons.fiber_manual_record,
+            Icon(recording.isPaused ? Icons.free_breakfast : Icons.fiber_manual_record,
                 size: 14, color: recording.isPaused ? Theme.of(context).colorScheme.outline : const Color(0xFFE53935)),
             const SizedBox(width: 6),
             Text(
-              '${recording.isPaused ? '일시정지' : '이동'} $elapsed · ${recording.distanceKm.toStringAsFixed(2)}km · '
+              '${recording.isPaused ? '휴식 중 · 이동' : '이동'} $elapsed · ${recording.distanceKm.toStringAsFixed(2)}km · '
               'GPS ${recording.track.isEmpty ? '대기 중' : '${recording.track.length}점${since == null ? '' : ' ($since초 전)'}'}',
               style: text.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
             ),
@@ -130,9 +130,9 @@ class _LiveHeader extends StatelessWidget {
         ],
         const SizedBox(height: 2),
         Text(
-          !recording.isPaused && recording.track.isNotEmpty && idleMin >= 3
+          recording.track.isNotEmpty && idleMin >= 3
               ? '총 경과 $total · $idleMin분 동안 움직임이 없어요. 멈춘 시간은 이동 시간에 들어가지 않아요. 도착했다면 [정지]를 눌러주세요.'
-              : '총 경과 $total · 멈춰 있는 시간은 이동 시간에서 자동으로 빠져요',
+              : '총 경과 $total · 위치는 계속 기록되고, 멈춰 있는 시간은 이동 시간에서 자동으로 빠져요',
           style: text.bodySmall,
         ),
         if (recording.course != null) ...[
