@@ -21,8 +21,11 @@ class MapViewModel extends Notifier<MapState> {
   static const overviewZoom = 10.0;
   static const focusZoom = 13.0;
 
-  /// 내 위치 기준 카메라 줌 (반경 약 5km가 보여 가까운 산이 함께 잡힘)
+  /// 앱 첫 진입 줌: 반경 약 5km가 보여 가까운 산이 함께 잡힘
   static const myLocationZoom = 12.5;
+
+  /// [내 위치] 버튼·기록 중 줌: 걷는 게 보이는 축척 (약 50m 스케일, 줌 17)
+  static const walkingZoom = 17.0;
 
   /// 이 줌 이상에서 카메라 중심 근처 산군을 자동 선택, 미만이면 선택 해제
   static const autoFocusZoom = 12.0;
@@ -46,7 +49,7 @@ class MapViewModel extends Notifier<MapState> {
       state = state.copyWith(
         liveTrack: recording ? track : const [],
         myLocation: track.lastOrNull ?? state.myLocation,
-        cameraCommand: firstFix ? CameraFocus(++_cameraSeq, track.first, 15) : null,
+        cameraCommand: firstFix ? CameraFocus(++_cameraSeq, track.first, walkingZoom) : null,
       );
     });
     return const MapState();
@@ -56,7 +59,7 @@ class MapViewModel extends Notifier<MapState> {
 
   /// 지도가 준비되면 호출. 권한을 요청하고(맥락: 지도) 내 위치로 카메라를 맞춘다.
   /// 거부되면 7개 산군 개요 카메라를 유지하고 안내 문구를 띄운다.
-  Future<void> locateMe({bool moveCamera = true}) async {
+  Future<void> locateMe({bool moveCamera = true, double zoom = myLocationZoom}) async {
     final pos = await ref.read(locationServiceProvider).currentWithPermission();
     if (pos == null) {
       debugPrint('[map] 내 위치 없음 (권한 거부 또는 실패) → 개요 유지');
@@ -67,7 +70,7 @@ class MapViewModel extends Notifier<MapState> {
     state = state.copyWith(
       myLocation: pos,
       locationDenied: false,
-      cameraCommand: moveCamera ? CameraFocus(++_cameraSeq, pos, myLocationZoom) : null,
+      cameraCommand: moveCamera ? CameraFocus(++_cameraSeq, pos, zoom) : null,
     );
   }
 

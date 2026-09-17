@@ -209,7 +209,8 @@ class _MapHomePageState extends ConsumerState<MapHomePage> with WidgetsBindingOb
                       child: FloatingActionButton.small(
                         heroTag: 'my_location',
                         tooltip: '내 위치',
-                        onPressed: () => vm.locateMe(),
+                        // 걷는 게 보이는 축척으로 (첫 진입은 주변 산이 보이는 줌, 버튼은 50m 스케일)
+                        onPressed: () => vm.locateMe(zoom: MapViewModel.walkingZoom),
                         child: Icon(state.locationDenied ? Icons.location_disabled : Icons.my_location),
                       ),
                     );
