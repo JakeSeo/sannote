@@ -57,28 +57,43 @@ class GeolocatorLocationService implements LocationService {
   }
 
   /// 기록용 스트림. 화면 꺼져도 유지 (Android 포그라운드 서비스 / iOS 백그라운드 위치).
+  ///
+  /// 항상 가장 촘촘한 설정(3초/3m) 하나로만 구독한다. 백그라운드에서 절약하려고
+  /// 취소→재구독을 하면 Android는 포그라운드 서비스가 백그라운드에서 다시 시작돼 막히고
+  /// (12+ ForegroundServiceStartNotAllowedException, 10+ while-in-use 제한),
+  /// iOS는 업데이트가 끊긴 순간 앱이 서스펜드돼 재구독이 실행되지 않는다.
+  /// → 결과적으로 백그라운드 동안 점이 하나도 안 찍힌다. 솎아내기는 저장하는 쪽에서 한다.
   @override
-  Stream<GeoPoint> positions({TrackingProfile profile = TrackingProfile.foreground}) {
+  Stream<GeoPoint> positions() {
+    const dense = TrackingProfile.foreground;
     final settings = switch (defaultTargetPlatform) {
       TargetPlatform.android => AndroidSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: profile.distanceM,
-          intervalDuration: profile.interval,
+          distanceFilter: dense.distanceM,
+          intervalDuration: dense.interval,
+          // 기록 시작(앱이 보이는 상태)에 켜져서 종료까지 살아 있어야 하는 서비스.
+          // 이 알림이 곧 "기록 중" 표시다 — setOngoing 으로 스와이프해 지울 수 없게 한다.
+          // Android 13+ 에서는 알림 권한이 있어야 보인다 (Notifications.ensurePermission).
+          // 문구는 구독 시점에 고정된다: 거리·시간을 실시간으로 넣으려면 스트림을 다시 구독해야 하는데,
+          // 백그라운드 재구독은 위치를 끊어먹으므로 하지 않는다 (positions 주석 참고).
           foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: '산노트 기록 중',
-            notificationText: '산행 트랙을 기록하고 있어요. 종료는 앱에서 눌러주세요.',
+            notificationTitle: '산책 기록 중',
+            notificationText: '걸은 길을 그리고 있어요. 종료는 앱에서 눌러주세요.',
+            notificationChannelName: '산책 기록',
+            notificationIcon: AndroidResource(name: 'ic_stat_sannote'),
             enableWakeLock: true,
+            setOngoing: true,
           ),
         ),
       TargetPlatform.iOS => AppleSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: profile.distanceM,
+          distanceFilter: dense.distanceM,
           activityType: ActivityType.fitness,
           pauseLocationUpdatesAutomatically: false,
           allowBackgroundLocationUpdates: true,
           showBackgroundLocationIndicator: true,
         ),
-      _ => LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: profile.distanceM),
+      _ => LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: dense.distanceM),
     };
     return Geolocator.getPositionStream(locationSettings: settings)
         .map((p) => (lat: p.latitude, lon: p.longitude));

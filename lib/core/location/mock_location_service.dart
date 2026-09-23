@@ -66,7 +66,7 @@ class MockLocationService implements LocationService {
   Future<GeoPoint?> currentWithPermission() async => _fixed;
 
   @override
-  Stream<GeoPoint> positions({TrackingProfile profile = TrackingProfile.foreground}) async* {
+  Stream<GeoPoint> positions() async* {
     if (_route.isEmpty) {
       if (_fixed != null) yield _fixed;
       return;

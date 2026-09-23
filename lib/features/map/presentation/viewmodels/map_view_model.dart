@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/device/notifications.dart';
 import '../../../../core/geo/geo_point.dart';
 import '../../../../core/location/location_provider.dart';
 import '../../../courses/domain/entities/course.dart';
@@ -73,6 +76,21 @@ class MapViewModel extends Notifier<MapState> {
       locationDenied: false,
       cameraCommand: moveCamera ? CameraFocus(++_cameraSeq, pos, zoom) : null,
     );
+    unawaited(_askNotificationPermissionOnce());
+  }
+
+  /// 기록 중 알림(Android 13+ POST_NOTIFICATIONS) 권한은 **지도 홈에서 미리** 한 번만 묻는다.
+  /// 기록 시작 때 처음 물으면, 사용자가 팝업에 답하기 전에 앱을 나가는 순간
+  /// 위치 스트림 시작이 막혀 기록이 통째로 날아간다 (RecordingViewModel.start 주석 참고).
+  bool _askedNotification = false;
+
+  Future<void> _askNotificationPermissionOnce() async {
+    if (_askedNotification) return;
+    _askedNotification = true;
+    final noti = ref.read(notificationsProvider);
+    if (await noti.hasPermission()) return;
+    final ok = await noti.ensurePermission();
+    debugPrint('[map] 기록 알림 권한: ${ok ? '허용' : '거부 — 기록 중 알림이 안 보입니다'}');
   }
 
   // ---------- 데이터 로드 ----------
