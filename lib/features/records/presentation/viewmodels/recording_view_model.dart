@@ -65,6 +65,18 @@ class RecordingState {
   /// 움직임이 없는 시간
   Duration get idleFor => lastMovedAt == null ? Duration.zero : DateTime.now().difference(lastMovedAt!);
 
+  /// 위치 신호가 끊겼다고 볼 기준. 배경 저장 간격(12초)보다 넉넉히 크게 잡는다.
+  static const signalGapThreshold = Duration(seconds: 60);
+
+  /// 마지막으로 위치를 받은 시각. 아직 한 점도 없으면 기록 시작 시각이 기준.
+  DateTime? get lastSignalAt => lastFixAt ?? hike?.startedAt;
+
+  /// 마지막 위치 이후 흐른 시간 (움직임이 아니라 '수신'이 기준 — 제자리에 서 있어도 점은 들어온다)
+  Duration get signalGap => lastSignalAt == null ? Duration.zero : DateTime.now().difference(lastSignalAt!);
+
+  /// 위치가 한동안 안 들어오는 상태. 실내·계곡·기기 문제 모두 여기로 드러난다.
+  bool get signalLost => isRecording && signalGap >= signalGapThreshold;
+
   bool get isRecording => hike != null;
 
   Duration get pausedSoFar =>
@@ -114,9 +126,9 @@ class RecordingViewModel extends Notifier<RecordingState> {
   StreamSubscription<GeoPoint>? _sub;
   Timer? _ticker;
 
-  /// 첫 위치가 한참 안 들어오면 사용자에게 알린다 (스트림이 조용히 죽은 경우를 종료 때까지 모르지 않도록)
-  Timer? _firstFixWatchdog;
-  static const _firstFixTimeout = Duration(seconds: 90);
+
+  /// 신호 끊김 로그를 한 번만 남기기 위한 플래그 (표시는 RecordingState.signalLost)
+  bool _signalLostLogged = false;
   TrackingProfile _profile = TrackingProfile.foreground;
   int? _batteryAtStart;
 
@@ -209,14 +221,12 @@ class RecordingViewModel extends Notifier<RecordingState> {
       },
     );
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (state.isRecording) state = state.copyWith(); // 경과 시간 갱신
-    });
-    _firstFixWatchdog = Timer(_firstFixTimeout, () {
-      if (!state.isRecording || state.track.isNotEmpty) return;
-      debugPrint('[record] ${_firstFixTimeout.inSeconds}초째 위치 0점 — 스트림이 열리지 않았을 수 있음');
-      state = state.copyWith(
-        error: '아직 위치 신호를 못 받았어요. 하늘이 보이는 곳으로 나가보고, 그래도 안 되면 기록을 종료했다 다시 시작해주세요.',
-      );
+      if (!state.isRecording) return;
+      if (state.signalLost && !_signalLostLogged) {
+        _signalLostLogged = true;
+        debugPrint('[record] 위치 신호 끊김 — ${state.signalGap.inSeconds}초째 (${state.track.length}점까지 기록)');
+      }
+      state = state.copyWith(); // 경과 시간·끊김 시간 갱신
     });
   }
 
@@ -256,9 +266,11 @@ class RecordingViewModel extends Notifier<RecordingState> {
   Future<void> _onFix(GeoPoint p) async {
     final hike = state.hike;
     if (hike == null) return;
-    _firstFixWatchdog?.cancel(); // 한 점이라도 들어오면 스트림은 살아 있다
-    _firstFixWatchdog = null;
     final now = DateTime.now();
+    if (_signalLostLogged) {
+      debugPrint('[record] 위치 신호 복구 (${state.signalGap.inSeconds}초 만에)');
+      _signalLostLogged = false;
+    }
     if (_tooSoon(p, now)) return;
     if (state.track.length < 3 || state.track.length % 20 == 0) {
       debugPrint('[record] 위치 수신 #${state.track.length + 1}: ${p.lat.toStringAsFixed(5)}, ${p.lon.toStringAsFixed(5)}');
@@ -347,8 +359,7 @@ class RecordingViewModel extends Notifier<RecordingState> {
   void _stopStream() {
     _sub?.cancel();
     _sub = null;
-    _firstFixWatchdog?.cancel();
-    _firstFixWatchdog = null;
+    _signalLostLogged = false;
     _ticker?.cancel();
     _ticker = null;
   }

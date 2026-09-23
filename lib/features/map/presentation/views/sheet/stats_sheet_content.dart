@@ -117,21 +117,49 @@ class _LiveHeader extends StatelessWidget {
     final total = fmt(recording.elapsed);
     final idleMin = recording.idleFor.inMinutes;
     final since = recording.lastFixAt == null ? null : DateTime.now().difference(recording.lastFixAt!).inSeconds;
+    // 위치가 한동안 안 들어오면 접힌 시트에서도 바로 보이도록 첫 줄을 경고로 바꾼다
+    final lost = recording.signalLost;
+    final scheme = Theme.of(context).colorScheme;
+    final gap = recording.signalGap;
+    final gapText = gap.inMinutes >= 1 ? '${gap.inMinutes}분째' : '${gap.inSeconds}초째';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(recording.isPaused ? Icons.free_breakfast : Icons.fiber_manual_record,
-                size: 14, color: recording.isPaused ? Theme.of(context).colorScheme.outline : const Color(0xFFE53935)),
+            Icon(
+              lost
+                  ? Icons.location_disabled
+                  : (recording.isPaused ? Icons.free_breakfast : Icons.fiber_manual_record),
+              size: 14,
+              color: lost
+                  ? scheme.error
+                  : (recording.isPaused ? scheme.outline : const Color(0xFFE53935)),
+            ),
             const SizedBox(width: 6),
-            Text(
-              '${recording.isPaused ? '휴식 중 · 이동' : '이동'} $elapsed · ${recording.distanceKm.toStringAsFixed(2)}km · '
-              'GPS ${recording.track.isEmpty ? '대기 중' : '${recording.track.length}점${since == null ? '' : ' ($since초 전)'}'}',
-              style: text.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+            Expanded(
+              child: Text(
+                lost
+                    ? '위치 신호 없음 · $gapText · ${recording.track.length}점까지 기록됨'
+                    : '${recording.isPaused ? '휴식 중 · 이동' : '이동'} $elapsed · ${recording.distanceKm.toStringAsFixed(2)}km · '
+                        'GPS ${recording.track.isEmpty ? '대기 중' : '${recording.track.length}점${since == null ? '' : ' ($since초 전)'}'}',
+                style: text.titleSmall?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: lost ? scheme.error : null,
+                ),
+              ),
             ),
           ],
         ),
+        if (lost) ...[
+          const SizedBox(height: 4),
+          Text(
+            recording.track.isEmpty
+                ? '아직 위치를 한 번도 못 받았어요. 건물 안이면 하늘이 보이는 곳으로 나와보세요. 신호가 잡히면 그때부터 기록돼요.'
+                : '지금 걷는 구간은 기록되지 않고 있어요. 하늘이 보이는 곳으로 나오면 이어서 기록돼요.',
+            style: text.bodySmall?.copyWith(color: scheme.error),
+          ),
+        ],
         if (recording.error != null) ...[
           const SizedBox(height: 4),
           Text(recording.error!, style: text.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error)),
