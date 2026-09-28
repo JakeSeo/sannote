@@ -18,6 +18,26 @@ class Notifications {
   /// 없으면 요청(팝업). 기록 시작처럼 맥락이 분명한 곳에서만 부른다.
   Future<bool> ensurePermission() => _invoke('ensurePermission');
 
+  /// 기록을 켜둔 걸 잊었을 때 깨워주는 알림 (소리 있는 일반 알림, 사용자가 지울 수 있음).
+  /// 상시 표시되는 포그라운드 서비스 알림과는 별개다.
+  Future<void> showReminder({required String title, required String body}) async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      await _channel.invokeMethod<void>('showReminder', {'title': title, 'body': body});
+    } catch (e) {
+      debugPrint('[noti] 알림 표시 실패: $e');
+    }
+  }
+
+  Future<void> cancelReminder() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      await _channel.invokeMethod<void>('cancelReminder');
+    } catch (e) {
+      debugPrint('[noti] 알림 취소 실패: $e');
+    }
+  }
+
   Future<bool> _invoke(String method) async {
     if (defaultTargetPlatform != TargetPlatform.android) return true;
     try {

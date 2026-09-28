@@ -121,6 +121,9 @@ class RecordingState {
 /// 디버그 전용: `--dart-define=SANNOTE_AUTOFINISH=completed|partial` 이면 Mock 재생이 끝날 때 자동 종료
 const _debugAutoFinish = String.fromEnvironment('SANNOTE_AUTOFINISH');
 
+/// 디버그 전용: 기록 방치 알림 기준을 분 단위로 줄인다 (기본 30분)
+const _debugIdleReminderMin = int.fromEnvironment('SANNOTE_IDLE_REMINDER');
+
 /// 산행 기록 컨트롤러. 위치 스트림 구독 → 로컬 DB에 점 추가. 화면과 무관하게 살아 있어야 한다.
 class RecordingViewModel extends Notifier<RecordingState> {
   StreamSubscription<GeoPoint>? _sub;
@@ -129,6 +132,21 @@ class RecordingViewModel extends Notifier<RecordingState> {
 
   /// 신호 끊김 로그를 한 번만 남기기 위한 플래그 (표시는 RecordingState.signalLost)
   bool _signalLostLogged = false;
+
+  /// 기록을 켜둔 채 잊었는지 보기 위한 최근 위치 창 (판정 기간 + 여유만큼만 들고 있는다)
+  final _recentFixes = <TrackPoint>[];
+  DateTime? _nextReminderAt;
+  DateTime _nextReminderCheck = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _reminderShown = false;
+
+  /// 이 시간 동안 제자리이거나 위치가 없으면 "아직 기록 중"이라고 알린다.
+  /// 디버그 빌드에서는 `--dart-define=SANNOTE_IDLE_REMINDER=<분>` 으로 줄여 테스트한다 (30분 안 기다리려고).
+  static Duration get idleReminderAfter =>
+      kDebugMode && _debugIdleReminderMin > 0 ? Duration(minutes: _debugIdleReminderMin) : const Duration(minutes: 30);
+
+  /// 제자리 판정 반경. 실측(2026-09-23 밤샘 기록)에서 실내 GPS 드리프트가 77×92m 안에 머물렀다.
+  /// idleFor(마지막 '움직임')는 드리프트를 이동으로 세기 때문에 이 판정에 쓸 수 없다.
+  static const stationaryRadiusM = 150.0;
   TrackingProfile _profile = TrackingProfile.foreground;
   int? _batteryAtStart;
 
@@ -226,8 +244,62 @@ class RecordingViewModel extends Notifier<RecordingState> {
         _signalLostLogged = true;
         debugPrint('[record] 위치 신호 끊김 — ${state.signalGap.inSeconds}초째 (${state.track.length}점까지 기록)');
       }
+      _checkForgotten();
       state = state.copyWith(); // 경과 시간·끊김 시간 갱신
     });
+  }
+
+  /// 기록을 켜둔 걸 잊었는지 보고 알림을 띄운다 (조건이 이어지면 [idleReminderAfter]마다 다시).
+  void _checkForgotten() {
+    final now = DateTime.now();
+    if (now.isBefore(_nextReminderCheck)) return;
+    _nextReminderCheck = now.add(const Duration(seconds: 15));
+    final hike = state.hike;
+    if (hike == null || now.difference(hike.startedAt) < idleReminderAfter) return;
+
+    final reason = _forgottenReason(now);
+    if (reason == null) {
+      // 다시 움직이기 시작했으면 알림을 거두고 다음 판정을 열어둔다
+      if (_reminderShown) {
+        _reminderShown = false;
+        _nextReminderAt = null;
+        unawaited(ref.read(notificationsProvider).cancelReminder());
+      }
+      return;
+    }
+    if (_nextReminderAt != null && now.isBefore(_nextReminderAt!)) return;
+    _nextReminderAt = now.add(idleReminderAfter);
+    _reminderShown = true;
+    debugPrint('[record] 기록 방치 알림: $reason');
+    unawaited(ref.read(notificationsProvider).showReminder(title: '산책 기록이 켜져 있어요', body: reason));
+  }
+
+  String? _forgottenReason(DateTime now) =>
+      forgottenReason(now: now, fixes: _recentFixes, after: idleReminderAfter);
+
+  /// 방치로 볼 이유. 아니면 null. (판단만 하는 순수 함수 — 테스트 대상)
+  ///
+  /// [fixes]는 오래된 것부터 정렬된 최근 위치 창. 두 가지를 본다:
+  /// ① 창 안에 위치가 하나도 없음 = 신호가 끊긴 채 켜져 있음
+  /// ② 위치는 들어오지만 전부 [radiusM] 안 = 제자리 (GPS 드리프트를 움직임으로 오인하지 않기 위해
+  ///    마지막 '움직임' 시각이 아니라 좌표의 퍼짐으로 본다)
+  static String? forgottenReason({
+    required DateTime now,
+    required List<TrackPoint> fixes,
+    required Duration after,
+    double radiusM = stationaryRadiusM,
+  }) {
+    final mins = after.inMinutes;
+    final cutoff = now.subtract(after);
+    final recent = fixes.where((f) => f.recordedAt.isAfter(cutoff)).toList();
+    // 위치가 아예 안 들어오는 경우 — 실내에 두고 잊은 전형적인 모습
+    if (recent.isEmpty) return '$mins분째 위치 신호가 없어요. 도착했다면 앱에서 [정지]를 눌러주세요.';
+    // 창 전체를 덮을 만큼의 기록이 아직 없으면 판단하지 않는다
+    if (fixes.first.recordedAt.isAfter(cutoff)) return null;
+    // 점은 계속 들어오지만 제자리인 경우
+    final here = recent.last.position;
+    if (recent.any((f) => distanceKm(f.position, here) * 1000 >= radiusM)) return null;
+    return '$mins분째 같은 자리예요. 도착했다면 앱에서 [정지]를 눌러주세요.';
   }
 
   /// 휴식 표시. 리스닝과 저장은 그대로 계속된다 (UI 상태만 바뀜)
@@ -284,6 +356,9 @@ class RecordingViewModel extends Notifier<RecordingState> {
     }
     final track = [...state.track, p];
     final fix = TrackPoint(recordedAt: now, position: p);
+    _recentFixes.add(fix);
+    final keepFrom = now.subtract(idleReminderAfter + const Duration(minutes: 5));
+    _recentFixes.removeWhere((f) => f.recordedAt.isBefore(keepFrom));
     // 이동 시간: 이전 점과의 간격 중 실제로 움직인 구간만 누적 (종료 시 ComputeMovingTime과 같은 규칙)
     final prev = state.lastFix;
     final step = prev == null ? Duration.zero : ComputeMovingTime.step(prev.recordedAt, prev.position, now, p);
@@ -360,6 +435,13 @@ class RecordingViewModel extends Notifier<RecordingState> {
     _sub?.cancel();
     _sub = null;
     _signalLostLogged = false;
+    _recentFixes.clear();
+    _nextReminderAt = null;
+    _nextReminderCheck = DateTime.fromMillisecondsSinceEpoch(0);
+    if (_reminderShown) {
+      _reminderShown = false;
+      unawaited(ref.read(notificationsProvider).cancelReminder());
+    }
     _ticker?.cancel();
     _ticker = null;
   }
